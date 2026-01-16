@@ -99,6 +99,7 @@ export const inventory = pgTable('inventory', {
     enum: [
       'fertilizer',
       'seeds',
+      'transplants',
       'value_added_materials',
       'pesticides',
       'tools',

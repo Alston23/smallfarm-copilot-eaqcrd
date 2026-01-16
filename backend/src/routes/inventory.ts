@@ -6,6 +6,7 @@ import type { FastifyRequest, FastifyReply } from 'fastify';
 type InventoryCategory =
   | 'fertilizer'
   | 'seeds'
+  | 'transplants'
   | 'value_added_materials'
   | 'pesticides'
   | 'tools'
@@ -266,6 +267,14 @@ export function registerInventoryRoutes(app: App): void {
             'Fruit Seeds',
             'Root Vegetable Seeds',
             'Legume Seeds',
+            'Other',
+          ],
+          transplants: [
+            'Vegetable Transplants',
+            'Herb Transplants',
+            'Flower Transplants',
+            'Fruit Transplants',
+            'Seedlings',
             'Other',
           ],
           value_added_materials: [
