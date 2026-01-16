@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -31,11 +31,7 @@ export default function FinancialScreen() {
     profit: 0,
   });
 
-  useEffect(() => {
-    loadFinancialSummary();
-  }, []);
-
-  const loadFinancialSummary = async () => {
+  const loadFinancialSummary = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading financial summary');
@@ -62,7 +58,11 @@ export default function FinancialScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    loadFinancialSummary();
+  }, [loadFinancialSummary]);
 
   return (
     <>

@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -48,11 +48,7 @@ export default function CropDetailScreen() {
   const [crop, setCrop] = useState<CropDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCropDetail();
-  }, [id]);
-
-  const loadCropDetail = async () => {
+  const loadCropDetail = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading crop detail for id:', id);
@@ -72,7 +68,11 @@ export default function CropDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, token]);
+
+  useEffect(() => {
+    loadCropDetail();
+  }, [loadCropDetail]);
 
   if (loading) {
     return (

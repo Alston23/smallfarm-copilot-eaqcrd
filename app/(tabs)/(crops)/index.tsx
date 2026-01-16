@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -46,11 +46,7 @@ export default function CropsScreen() {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCrops();
-  }, [selectedCategory, searchQuery]);
-
-  const loadCrops = async () => {
+  const loadCrops = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading crops for category:', selectedCategory, 'search:', searchQuery);
@@ -71,7 +67,11 @@ export default function CropsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, searchQuery, token]);
+
+  useEffect(() => {
+    loadCrops();
+  }, [loadCrops]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

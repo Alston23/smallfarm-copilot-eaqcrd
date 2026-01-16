@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -41,11 +41,7 @@ export default function FieldsScreen() {
   const [fieldsBeds, setFieldsBeds] = useState<FieldBed[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadFieldsBeds();
-  }, []);
-
-  const loadFieldsBeds = async () => {
+  const loadFieldsBeds = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading fields and beds');
@@ -65,7 +61,11 @@ export default function FieldsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    loadFieldsBeds();
+  }, [loadFieldsBeds]);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>

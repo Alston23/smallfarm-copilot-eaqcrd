@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -38,11 +38,7 @@ export default function ScheduleScreen() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('pending');
 
-  useEffect(() => {
-    loadSchedules();
-  }, [filter]);
-
-  const loadSchedules = async () => {
+  const loadSchedules = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading schedules, filter:', filter);
@@ -66,7 +62,11 @@ export default function ScheduleScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter, token]);
+
+  useEffect(() => {
+    loadSchedules();
+  }, [loadSchedules]);
 
   const toggleComplete = async (id: string, completed: boolean) => {
     try {

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   View,
@@ -38,7 +39,7 @@ interface FloatingTabBarProps {
 }
 
 export default function FloatingTabBar({
-  tabs,
+  tabs = [],
   containerWidth = screenWidth / 2.5,
   borderRadius = 35,
   bottomMargin
@@ -48,13 +49,23 @@ export default function FloatingTabBar({
   const theme = useTheme();
   const animatedValue = useSharedValue(0);
 
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   // Improved active tab detection with better path matching
   const activeTabIndex = React.useMemo(() => {
+    // Safety check
+    if (!tabs || tabs.length === 0) {
+      return 0;
+    }
+
     // Find the best matching tab based on the current pathname
     let bestMatch = -1;
     let bestMatchScore = 0;
 
     tabs.forEach((tab, index) => {
+      if (!tab || !tab.route) {
+        return;
+      }
+
       let score = 0;
 
       // Exact route match gets highest score
@@ -66,11 +77,11 @@ export default function FloatingTabBar({
         score = 80;
       }
       // Check if pathname contains the tab name
-      else if (pathname.includes(tab.name)) {
+      else if (tab.name && pathname.includes(tab.name)) {
         score = 60;
       }
       // Check for partial matches in the route
-      else if (tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
+      else if (typeof tab.route === 'string' && tab.route.includes('/(tabs)/') && pathname.includes(tab.route.split('/(tabs)/')[1])) {
         score = 40;
       }
 
@@ -94,15 +105,12 @@ export default function FloatingTabBar({
     }
   }, [activeTabIndex, animatedValue]);
 
-  const handleTabPress = (route: Href) => {
-    router.push(route);
-  };
-
-  // Remove unnecessary tabBarStyle animation to prevent flickering
-
-  const tabWidthPercent = ((100 / tabs.length) - 1).toFixed(2);
+  const tabWidthPercent = tabs.length > 0 ? ((100 / tabs.length) - 1).toFixed(2) : '100';
 
   const indicatorStyle = useAnimatedStyle(() => {
+    if (tabs.length === 0) {
+      return { transform: [{ translateX: 0 }] };
+    }
     const tabWidth = (containerWidth - 8) / tabs.length; // Account for container padding (4px on each side)
     return {
       transform: [
@@ -116,6 +124,17 @@ export default function FloatingTabBar({
       ],
     };
   });
+
+  // NOW conditional rendering is safe - all hooks have been called
+  if (!tabs || tabs.length === 0) {
+    console.log('FloatingTabBar: No tabs provided');
+    return null;
+  }
+
+  const handleTabPress = (route: Href) => {
+    console.log('FloatingTabBar: Navigating to', route);
+    router.push(route);
+  };
 
   // Dynamic styles based on theme
   const dynamicStyles = {
