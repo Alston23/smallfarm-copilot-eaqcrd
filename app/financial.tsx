@@ -136,7 +136,7 @@ export default function FinancialScreen() {
                 style={[styles.button, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1 }]}
                 onPress={() => {
                   console.log('User tapped View Detailed Reports button');
-                  // TODO: Implement detailed reports view
+                  router.push('/financial-reports');
                 }}
               >
                 <IconSymbol
