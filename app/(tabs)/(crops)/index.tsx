@@ -25,14 +25,15 @@ const categories = [
   { id: 'vegetables', label: 'Vegetables', icon: 'eco', iosIcon: 'leaf.fill' },
   { id: 'fruits', label: 'Fruits', icon: 'apple', iosIcon: 'apple.logo' },
   { id: 'herbs', label: 'Herbs', icon: 'spa', iosIcon: 'sparkles' },
-  { id: 'flowers', label: 'Flowers', icon: 'local-florist', iosIcon: 'flower.fill' },
+  { id: 'flowers', label: 'flowers', icon: 'local-florist', iosIcon: 'flower.fill' },
 ];
 
 interface Crop {
   id: string;
   name: string;
   category: string;
-  is_custom: boolean;
+  is_custom?: boolean;
+  isCustom?: boolean;
 }
 
 export default function CropsScreen() {
@@ -50,20 +51,35 @@ export default function CropsScreen() {
     setLoading(true);
     try {
       console.log('Loading crops for category:', selectedCategory, 'search:', searchQuery);
-      const url = `${BACKEND_URL}/api/crops?category=${selectedCategory}${searchQuery ? `&search=${searchQuery}` : ''}`;
+      const url = `${BACKEND_URL}/api/crops`;
       const response = await fetch(url, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {},
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log(`Loaded ${data.length} crops for ${selectedCategory}`);
-        setCrops(data);
+        console.log(`Loaded ${data.length} total crops from backend`);
+        
+        // Filter by category and search query on the frontend
+        let filteredCrops = data.filter((crop: Crop) => 
+          crop.category === selectedCategory
+        );
+        
+        if (searchQuery) {
+          filteredCrops = filteredCrops.filter((crop: Crop) =>
+            crop.name.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+        }
+        
+        console.log(`Filtered to ${filteredCrops.length} crops for ${selectedCategory}`);
+        setCrops(filteredCrops);
       } else {
         console.error('Failed to load crops:', response.status);
+        Alert.alert('Error', 'Failed to load crops. Please try again.');
       }
     } catch (error) {
       console.error('Error loading crops:', error);
+      Alert.alert('Error', 'Failed to load crops. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -158,18 +174,23 @@ export default function CropsScreen() {
           </View>
         ) : (
           <>
-            {crops.map((crop) => (
+            <View style={styles.countContainer}>
+              <Text style={[styles.countText, { color: colors.icon }]}>
+                {crops.length} {selectedCategory} available
+              </Text>
+            </View>
+            {crops.map((crop, index) => (
               <TouchableOpacity
-                key={crop.id}
+                key={`${crop.id}-${index}`}
                 style={[styles.cropCard, { backgroundColor: colors.card, borderColor: colors.border }]}
                 onPress={() => {
-                  console.log('User tapped crop:', crop.name);
+                  console.log('User tapped crop:', crop.name, 'ID:', crop.id);
                   router.push(`/(tabs)/(crops)/${crop.id}`);
                 }}
               >
                 <View style={styles.cropInfo}>
                   <Text style={[styles.cropName, { color: colors.text }]}>{crop.name}</Text>
-                  {crop.is_custom && (
+                  {(crop.is_custom || crop.isCustom) && (
                     <View style={[styles.customBadge, { backgroundColor: farmGreen }]}>
                       <Text style={styles.customBadgeText}>Custom</Text>
                     </View>
@@ -279,6 +300,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     marginTop: 16,
+  },
+  countContainer: {
+    marginBottom: 12,
+  },
+  countText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   cropCard: {
     flexDirection: 'row',

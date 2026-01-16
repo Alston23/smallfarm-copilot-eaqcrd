@@ -9,6 +9,7 @@ import {
   useColorScheme,
   ActivityIndicator,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -23,19 +24,34 @@ interface CropDetail {
   id: string;
   name: string;
   category: string;
-  row_spacing: string;
-  plant_spacing: string;
-  soil_ph_min: number;
-  soil_ph_max: number;
-  days_to_maturity: number;
-  planting_depth: string;
-  sun_requirements: string;
-  water_requirements: string;
-  common_pests: string;
-  common_diseases: string;
-  fertilizer_schedule: string;
-  harvest_tips: string;
-  is_custom: boolean;
+  row_spacing?: string;
+  rowSpacing?: string;
+  plant_spacing?: string;
+  plantSpacing?: string;
+  soil_ph?: string;
+  soilPh?: string;
+  soil_ph_min?: number;
+  soil_ph_max?: number;
+  days_to_maturity?: number;
+  daysToMaturity?: number;
+  planting_depth?: string;
+  plantingDepth?: string;
+  sun_requirements?: string;
+  sun_requirement?: string;
+  sunRequirement?: string;
+  water_requirements?: string;
+  water_requirement?: string;
+  waterRequirement?: string;
+  common_pests?: string;
+  commonPests?: string;
+  common_diseases?: string;
+  commonDiseases?: string;
+  fertilizer_schedule?: string;
+  fertilizerSchedule?: string;
+  harvest_tips?: string;
+  harvestTips?: string;
+  is_custom?: boolean;
+  isCustom?: boolean;
 }
 
 export default function CropDetailScreen() {
@@ -62,9 +78,11 @@ export default function CropDetailScreen() {
         setCrop(data);
       } else {
         console.error('Failed to load crop detail:', response.status);
+        Alert.alert('Error', 'Failed to load crop details. Please try again.');
       }
     } catch (error) {
       console.error('Error loading crop detail:', error);
+      Alert.alert('Error', 'Failed to load crop details. Please check your connection.');
     } finally {
       setLoading(false);
     }
@@ -88,11 +106,38 @@ export default function CropDetailScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.errorContainer}>
+          <IconSymbol
+            ios_icon_name="exclamationmark.triangle"
+            android_material_icon_name="warning"
+            size={64}
+            color={colors.icon}
+          />
           <Text style={[styles.errorText, { color: colors.text }]}>Crop not found</Text>
+          <TouchableOpacity
+            style={[styles.backButtonError, { backgroundColor: farmGreen }]}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backButtonText}>Go Back</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
+
+  // Helper function to get field value (handles both snake_case and camelCase)
+  const getField = (snakeCase: any, camelCase: any) => snakeCase || camelCase || 'N/A';
+
+  const rowSpacing = getField(crop.row_spacing, crop.rowSpacing);
+  const plantSpacing = getField(crop.plant_spacing, crop.plantSpacing);
+  const soilPh = getField(crop.soil_ph, crop.soilPh);
+  const daysToMaturity = getField(crop.days_to_maturity, crop.daysToMaturity);
+  const plantingDepth = getField(crop.planting_depth, crop.plantingDepth);
+  const sunRequirement = getField(crop.sun_requirements || crop.sun_requirement, crop.sunRequirement);
+  const waterRequirement = getField(crop.water_requirements || crop.water_requirement, crop.waterRequirement);
+  const commonPests = getField(crop.common_pests, crop.commonPests);
+  const commonDiseases = getField(crop.common_diseases, crop.commonDiseases);
+  const fertilizerSchedule = getField(crop.fertilizer_schedule, crop.fertilizerSchedule);
+  const harvestTips = getField(crop.harvest_tips, crop.harvestTips);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
@@ -134,22 +179,22 @@ export default function CropDetailScreen() {
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Row Spacing:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.row_spacing}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{rowSpacing} inches</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Plant Spacing:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.plant_spacing}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{plantSpacing} inches</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Planting Depth:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.planting_depth}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{plantingDepth} inches</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Days to Maturity:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.days_to_maturity} days</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{daysToMaturity} days</Text>
           </View>
         </View>
 
@@ -158,40 +203,38 @@ export default function CropDetailScreen() {
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Soil pH:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>
-              {crop.soil_ph_min} - {crop.soil_ph_max}
-            </Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{soilPh}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Sun Requirements:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.sun_requirements}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{sunRequirement}</Text>
           </View>
           
           <View style={styles.infoRow}>
             <Text style={[styles.infoLabel, { color: colors.icon }]}>Water Requirements:</Text>
-            <Text style={[styles.infoValue, { color: colors.text }]}>{crop.water_requirements}</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{waterRequirement}</Text>
           </View>
         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Fertilizer Schedule</Text>
-          <Text style={[styles.sectionText, { color: colors.text }]}>{crop.fertilizer_schedule}</Text>
+          <Text style={[styles.sectionText, { color: colors.text }]}>{fertilizerSchedule}</Text>
         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Common Pests</Text>
-          <Text style={[styles.sectionText, { color: colors.text }]}>{crop.common_pests}</Text>
+          <Text style={[styles.sectionText, { color: colors.text }]}>{commonPests}</Text>
         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Common Diseases</Text>
-          <Text style={[styles.sectionText, { color: colors.text }]}>{crop.common_diseases}</Text>
+          <Text style={[styles.sectionText, { color: colors.text }]}>{commonDiseases}</Text>
         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Harvest Tips</Text>
-          <Text style={[styles.sectionText, { color: colors.text }]}>{crop.harvest_tips}</Text>
+          <Text style={[styles.sectionText, { color: colors.text }]}>{harvestTips}</Text>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -236,9 +279,23 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 40,
   },
   errorText: {
+    fontSize: 18,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  backButtonError: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: '#fff',
     fontSize: 16,
+    fontWeight: '600',
   },
   card: {
     padding: 20,
