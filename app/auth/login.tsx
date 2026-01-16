@@ -1,217 +1,275 @@
-
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
+  StyleSheet,
+  ActivityIndicator,
   Alert,
-  useColorScheme,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
-import { Colors, farmGreen } from '@/constants/Colors';
-import { IconSymbol } from '@/components/IconSymbol';
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
+} from "react-native";
+import { useAuth } from "@/contexts/AuthContext";
+import { useRouter } from "expo-router";
 
-export default function LoginScreen() {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+type Mode = "signin" | "signup";
+
+export default function AuthScreen() {
   const router = useRouter();
-  const { login } = useAuth();
-  
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const { signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, signInWithGitHub, loading: authLoading } =
+    useAuth();
+
+  const [mode, setMode] = useState<Mode>("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
+  if (authLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  const handleEmailAuth = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert("Error", "Please enter email and password");
       return;
     }
 
     setLoading(true);
     try {
-      await login(email, password);
-      console.log('Login successful, navigating to app');
-      router.replace('/(tabs)/crops');
+      if (mode === "signin") {
+        await signInWithEmail(email, password);
+        router.replace("/onboarding");
+      } else {
+        await signUpWithEmail(email, password, name);
+        Alert.alert(
+          "Success",
+          "Account created! Please check your email to verify your account."
+        );
+        router.replace("/onboarding");
+      }
     } catch (error: any) {
-      console.error('Login error:', error);
-      Alert.alert('Login Failed', error.message || 'Invalid credentials');
+      Alert.alert("Error", error.message || "Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSocialAuth = async (provider: "google" | "apple" | "github") => {
+    setLoading(true);
+    try {
+      if (provider === "google") {
+        await signInWithGoogle();
+      } else if (provider === "apple") {
+        await signInWithApple();
+      } else if (provider === "github") {
+        await signInWithGitHub();
+      }
+      router.replace("/onboarding");
+    } catch (error: any) {
+      Alert.alert("Error", error.message || "Authentication failed");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <IconSymbol
-              ios_icon_name="leaf.fill"
-              android_material_icon_name="eco"
-              size={64}
-              color={farmGreen}
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.content}>
+          <Text style={styles.title}>
+            {mode === "signin" ? "Sign In" : "Sign Up"}
+          </Text>
+
+          {mode === "signup" && (
+            <TextInput
+              style={styles.input}
+              placeholder="Name (optional)"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
             />
-            <Text style={[styles.title, { color: colors.text }]}>SmallFarm Copilot</Text>
-            <Text style={[styles.subtitle, { color: colors.icon }]}>
-              Your farming companion
+          )}
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+
+          <TextInput
+            style={styles.input}
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+          />
+
+          <TouchableOpacity
+            style={[styles.primaryButton, loading && styles.buttonDisabled]}
+            onPress={handleEmailAuth}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>
+                {mode === "signin" ? "Sign In" : "Sign Up"}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.switchModeButton}
+            onPress={() => setMode(mode === "signin" ? "signup" : "signin")}
+          >
+            <Text style={styles.switchModeText}>
+              {mode === "signin"
+                ? "Don't have an account? Sign Up"
+                : "Already have an account? Sign In"}
             </Text>
+          </TouchableOpacity>
+
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or continue with</Text>
+            <View style={styles.dividerLine} />
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.text }]}>Email</Text>
-              <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.card, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
-                placeholder="your@email.com"
-                placeholderTextColor={colors.icon}
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-            </View>
+          <TouchableOpacity
+            style={styles.socialButton}
+            onPress={() => handleSocialAuth("google")}
+            disabled={loading}
+          >
+            <Text style={styles.socialButtonText}>Continue with Google</Text>
+          </TouchableOpacity>
 
-            <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.text }]}>Password</Text>
-              <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.card, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
-                placeholder="Enter your password"
-                placeholderTextColor={colors.icon}
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoComplete="password"
-              />
-            </View>
-
+          {Platform.OS === "ios" && (
             <TouchableOpacity
-              onPress={() => router.push('/auth/forgot-password')}
-              style={styles.forgotButton}
-            >
-              <Text style={[styles.forgotText, { color: farmGreen }]}>
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.loginButton, { backgroundColor: farmGreen }]}
-              onPress={handleLogin}
+              style={[styles.socialButton, styles.appleButton]}
+              onPress={() => handleSocialAuth("apple")}
               disabled={loading}
             >
-              <Text style={styles.loginButtonText}>
-                {loading ? 'Logging in...' : 'Log In'}
+              <Text style={[styles.socialButtonText, styles.appleButtonText]}>
+                Continue with Apple
               </Text>
             </TouchableOpacity>
-
-            <View style={styles.registerContainer}>
-              <Text style={[styles.registerText, { color: colors.icon }]}>
-                Don&apos;t have an account?{' '}
-              </Text>
-              <TouchableOpacity onPress={() => router.push('/auth/register')}>
-                <Text style={[styles.registerLink, { color: farmGreen }]}>
-                  Sign Up
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          )}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
-  keyboardView: {
+  loadingContainer: {
     flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
   },
-  header: {
-    alignItems: 'center',
-    marginBottom: 48,
+  content: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginTop: 16,
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 8,
-  },
-  form: {
-    width: '100%',
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+    fontWeight: "bold",
+    marginBottom: 32,
+    textAlign: "center",
+    color: "#000",
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderRadius: 12,
+    borderColor: "#ddd",
+    borderRadius: 8,
     paddingHorizontal: 16,
-    fontSize: 16,
-  },
-  forgotButton: {
-    alignSelf: 'flex-end',
-    marginBottom: 24,
-  },
-  forgotText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  loginButton: {
-    height: 50,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
     marginBottom: 16,
-  },
-  loginButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    backgroundColor: "#fff",
   },
-  registerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+  primaryButton: {
+    height: 50,
+    backgroundColor: "#007AFF",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 8,
   },
-  registerText: {
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  buttonDisabled: {
+    opacity: 0.6,
+  },
+  switchModeButton: {
+    marginTop: 16,
+    alignItems: "center",
+  },
+  switchModeText: {
+    color: "#007AFF",
     fontSize: 14,
   },
-  registerLink: {
+  divider: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: "#ddd",
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: "#666",
     fontSize: 14,
-    fontWeight: '600',
+  },
+  socialButton: {
+    height: 50,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
+  socialButtonText: {
+    fontSize: 16,
+    color: "#000",
+    fontWeight: "500",
+  },
+  appleButton: {
+    backgroundColor: "#000",
+    borderColor: "#000",
+  },
+  appleButtonText: {
+    color: "#fff",
   },
 });

@@ -48,6 +48,8 @@ export default function RootLayout() {
             <Stack.Screen name="auth/login" />
             <Stack.Screen name="auth/register" />
             <Stack.Screen name="auth/forgot-password" />
+            <Stack.Screen name="auth-popup" />
+            <Stack.Screen name="auth-callback" />
             <Stack.Screen name="onboarding" />
             <Stack.Screen name="(tabs)" />
           </Stack>

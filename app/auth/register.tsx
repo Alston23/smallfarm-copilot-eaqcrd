@@ -22,16 +22,17 @@ export default function RegisterScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { register } = useAuth();
+  const { signUpWithEmail } = useAuth();
   
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [location, setLocation] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
+    console.log('User attempting registration with email:', email);
+    
     if (!name || !email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all required fields');
       return;
@@ -42,14 +43,14 @@ export default function RegisterScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+    if (password.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
       return;
     }
 
     setLoading(true);
     try {
-      await register(email, password, name, location);
+      await signUpWithEmail(email, password, name);
       console.log('Registration successful, navigating to onboarding');
       router.replace('/onboarding');
     } catch (error: any) {
@@ -69,7 +70,10 @@ export default function RegisterScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => {
+              console.log('User tapped back button on register screen');
+              router.back();
+            }}
           >
             <IconSymbol
               ios_icon_name="chevron.left"
@@ -128,21 +132,6 @@ export default function RegisterScreen() {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={[styles.label, { color: colors.text }]}>Location (Optional)</Text>
-              <TextInput
-                style={[styles.input, { 
-                  backgroundColor: colors.card, 
-                  color: colors.text,
-                  borderColor: colors.border 
-                }]}
-                placeholder="City, State or Region"
-                placeholderTextColor={colors.icon}
-                value={location}
-                onChangeText={setLocation}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
               <Text style={[styles.label, { color: colors.text }]}>Password *</Text>
               <TextInput
                 style={[styles.input, { 
@@ -150,7 +139,7 @@ export default function RegisterScreen() {
                   color: colors.text,
                   borderColor: colors.border 
                 }]}
-                placeholder="At least 6 characters"
+                placeholder="At least 8 characters"
                 placeholderTextColor={colors.icon}
                 value={password}
                 onChangeText={setPassword}
@@ -190,7 +179,10 @@ export default function RegisterScreen() {
               <Text style={[styles.loginText, { color: colors.icon }]}>
                 Already have an account?{' '}
               </Text>
-              <TouchableOpacity onPress={() => router.back()}>
+              <TouchableOpacity onPress={() => {
+                console.log('User tapped login link');
+                router.back();
+              }}>
                 <Text style={[styles.loginLink, { color: farmGreen }]}>
                   Log In
                 </Text>

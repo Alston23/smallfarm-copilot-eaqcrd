@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
+import { authClient } from '@/lib/auth';
 import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 
@@ -22,13 +22,14 @@ export default function ForgotPasswordScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { forgotPassword } = useAuth();
   
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
   const handleResetPassword = async () => {
+    console.log('User requesting password reset for email:', email);
+    
     if (!email) {
       Alert.alert('Error', 'Please enter your email address');
       return;
@@ -36,7 +37,10 @@ export default function ForgotPasswordScreen() {
 
     setLoading(true);
     try {
-      await forgotPassword(email);
+      await authClient.forgetPassword({
+        email,
+        redirectTo: '/auth/reset-password',
+      });
       console.log('Password reset email sent to:', email);
       setSent(true);
       Alert.alert(
@@ -61,7 +65,10 @@ export default function ForgotPasswordScreen() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => router.back()}
+            onPress={() => {
+              console.log('User tapped back button on forgot password screen');
+              router.back();
+            }}
           >
             <IconSymbol
               ios_icon_name="chevron.left"
@@ -116,7 +123,10 @@ export default function ForgotPasswordScreen() {
 
             <TouchableOpacity
               style={styles.backToLoginButton}
-              onPress={() => router.back()}
+              onPress={() => {
+                console.log('User tapped back to login');
+                router.back();
+              }}
             >
               <Text style={[styles.backToLoginText, { color: farmGreen }]}>
                 Back to Login

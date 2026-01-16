@@ -1,147 +1,150 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
-import Constants from 'expo-constants';
-
-const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { Platform } from "react-native";
+import { authClient, storeWebBearerToken } from "@/lib/auth";
 
 interface User {
   id: string;
   email: string;
-  name: string;
-  location?: string;
-  onboarding_completed: boolean;
-  show_onboarding: boolean;
+  name?: string;
+  image?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name: string, location?: string) => Promise<void>;
-  logout: () => Promise<void>;
-  forgotPassword: (email: string) => Promise<void>;
-  updateOnboarding: (completed: boolean, showAgain: boolean) => Promise<void>;
-  refreshUser: () => Promise<void>;
+  signInWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
+  signInWithGitHub: () => Promise<void>;
+  signOut: () => Promise<void>;
+  fetchUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+function openOAuthPopup(provider: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const popupUrl = `${window.location.origin}/auth-popup?provider=${provider}`;
+    const width = 500;
+    const height = 600;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      popupUrl,
+      "oauth-popup",
+      `width=${width},height=${height},left=${left},top=${top},scrollbars=yes`
+    );
+
+    if (!popup) {
+      reject(new Error("Failed to open popup. Please allow popups."));
+      return;
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "oauth-success" && event.data?.token) {
+        window.removeEventListener("message", handleMessage);
+        clearInterval(checkClosed);
+        resolve(event.data.token);
+      } else if (event.data?.type === "oauth-error") {
+        window.removeEventListener("message", handleMessage);
+        clearInterval(checkClosed);
+        reject(new Error(event.data.error || "OAuth failed"));
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener("message", handleMessage);
+        reject(new Error("Authentication cancelled"));
+      }
+    }, 500);
+  });
+}
+
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadStoredAuth();
+    fetchUser();
   }, []);
 
-  const loadStoredAuth = async () => {
+  const fetchUser = async () => {
     try {
-      const storedToken = await SecureStore.getItemAsync('auth_token');
-      const storedUser = await SecureStore.getItemAsync('user');
-      
-      if (storedToken && storedUser) {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+      setLoading(true);
+      const session = await authClient.getSession();
+      if (session?.data?.user) {
+        setUser(session.data.user as User);
+      } else {
+        setUser(null);
       }
     } catch (error) {
-      console.error('Error loading stored auth:', error);
+      console.error("Failed to fetch user:", error);
+      setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async (email: string, password: string) => {
-    console.log('User attempting login with email:', email);
-    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Login failed');
-    }
-
-    const data = await response.json();
-    console.log('Login successful for user:', data.user.email);
-    
-    await SecureStore.setItemAsync('auth_token', data.token);
-    await SecureStore.setItemAsync('user', JSON.stringify(data.user));
-    
-    setToken(data.token);
-    setUser(data.user);
-  };
-
-  const register = async (email: string, password: string, name: string, location?: string) => {
-    console.log('User attempting registration with email:', email);
-    const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, location }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Registration failed');
-    }
-
-    const data = await response.json();
-    console.log('Registration successful for user:', data.user.email);
-    
-    await SecureStore.setItemAsync('auth_token', data.token);
-    await SecureStore.setItemAsync('user', JSON.stringify(data.user));
-    
-    setToken(data.token);
-    setUser(data.user);
-  };
-
-  const logout = async () => {
-    console.log('User logging out');
-    await SecureStore.deleteItemAsync('auth_token');
-    await SecureStore.deleteItemAsync('user');
-    setToken(null);
-    setUser(null);
-  };
-
-  const forgotPassword = async (email: string) => {
-    console.log('User requesting password reset for email:', email);
-    const response = await fetch(`${BACKEND_URL}/api/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Password reset failed');
+  const signInWithEmail = async (email: string, password: string) => {
+    try {
+      await authClient.signIn.email({ email, password });
+      await fetchUser();
+    } catch (error) {
+      console.error("Email sign in failed:", error);
+      throw error;
     }
   };
 
-  const updateOnboarding = async (completed: boolean, showAgain: boolean) => {
-    if (!user) return;
-    
-    console.log('Updating onboarding status:', { completed, showAgain });
-    // Update locally since backend doesn't have this endpoint yet
-    const updatedUser = {
-      ...user,
-      onboarding_completed: completed,
-      show_onboarding: showAgain,
-    };
-    await SecureStore.setItemAsync('user', JSON.stringify(updatedUser));
-    setUser(updatedUser);
+  const signUpWithEmail = async (email: string, password: string, name?: string) => {
+    try {
+      await authClient.signUp.email({
+        email,
+        password,
+        name,
+      });
+      await fetchUser();
+    } catch (error) {
+      console.error("Email sign up failed:", error);
+      throw error;
+    }
   };
 
-  const refreshUser = async () => {
-    if (!token || !user) return;
-    
-    // Refresh user data from storage
-    const storedUser = await SecureStore.getItemAsync('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const signInWithSocial = async (provider: "google" | "apple" | "github") => {
+    try {
+      if (Platform.OS === "web") {
+        const token = await openOAuthPopup(provider);
+        storeWebBearerToken(token);
+        await fetchUser();
+      } else {
+        await authClient.signIn.social({
+          provider,
+          callbackURL: "/onboarding",
+        });
+        await fetchUser();
+      }
+    } catch (error) {
+      console.error(`${provider} sign in failed:`, error);
+      throw error;
+    }
+  };
+
+  const signInWithGoogle = () => signInWithSocial("google");
+  const signInWithApple = () => signInWithSocial("apple");
+  const signInWithGitHub = () => signInWithSocial("github");
+
+  const signOut = async () => {
+    try {
+      await authClient.signOut();
+      setUser(null);
+    } catch (error) {
+      console.error("Sign out failed:", error);
+      throw error;
     }
   };
 
@@ -149,14 +152,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
-        token,
         loading,
-        login,
-        register,
-        logout,
-        forgotPassword,
-        updateOnboarding,
-        refreshUser,
+        signInWithEmail,
+        signUpWithEmail,
+        signInWithGoogle,
+        signInWithApple,
+        signInWithGitHub,
+        signOut,
+        fetchUser,
       }}
     >
       {children}
@@ -167,7 +170,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }
