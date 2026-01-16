@@ -14,38 +14,33 @@ export default function TabLayout() {
       tabBar={(props) => <FloatingTabBar {...props} tabs={[
         {
           name: '(crops)',
-          title: 'Crops',
+          label: 'Crops',
           icon: 'eco',
-          iosIcon: 'leaf.fill',
-          href: '/(tabs)/(crops)',
+          route: '/(tabs)/(crops)',
         },
         {
           name: 'fields',
-          title: 'Fields',
+          label: 'Fields',
           icon: 'grid-on',
-          iosIcon: 'square.grid.2x2',
-          href: '/(tabs)/fields',
+          route: '/(tabs)/fields',
         },
         {
           name: 'schedule',
-          title: 'Schedule',
+          label: 'Schedule',
           icon: 'calendar-today',
-          iosIcon: 'calendar',
-          href: '/(tabs)/schedule',
+          route: '/(tabs)/schedule',
         },
         {
           name: 'inventory',
-          title: 'Inventory',
+          label: 'Inventory',
           icon: 'inventory',
-          iosIcon: 'cube.box.fill',
-          href: '/(tabs)/inventory',
+          route: '/(tabs)/inventory',
         },
         {
           name: 'more',
-          title: 'More',
+          label: 'More',
           icon: 'menu',
-          iosIcon: 'ellipsis.circle.fill',
-          href: '/(tabs)/more',
+          route: '/(tabs)/more',
         },
       ]} />}
       screenOptions={{
