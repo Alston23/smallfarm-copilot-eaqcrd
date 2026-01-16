@@ -8,6 +8,8 @@ interface CreateFieldBedBody {
   type: 'field' | 'bed';
   squareFootage?: string;
   acreage?: string;
+  irrigationType?: 'drip' | 'sprinkler' | 'flood' | 'manual' | 'none';
+  soilType?: 'clay' | 'sandy' | 'loam' | 'silt' | 'peat' | 'chalk';
 }
 
 interface AssignCropBody {
@@ -54,9 +56,9 @@ export function registerFieldsBedsRoutes(app: App): void {
   app.fastify.post<{ Body: CreateFieldBedBody }>(
     '/api/fields-beds',
     async (request: FastifyRequest<{ Body: CreateFieldBedBody }>, reply: FastifyReply) => {
-      const { name, type, squareFootage, acreage } = request.body;
+      const { name, type, squareFootage, acreage, irrigationType, soilType } = request.body;
 
-      app.logger.info({ name, type }, 'Creating field/bed');
+      app.logger.info({ name, type, irrigationType, soilType }, 'Creating field/bed');
 
       const session = await requireAuth(request, reply);
       if (!session) return;
@@ -70,11 +72,13 @@ export function registerFieldsBedsRoutes(app: App): void {
             type: type as any,
             squareFootage: squareFootage ? parseFloat(squareFootage).toString() : undefined,
             acreage: acreage ? parseFloat(acreage).toString() : undefined,
+            irrigationType: irrigationType as any,
+            soilType: soilType as any,
           })
           .returning();
 
         app.logger.info(
-          { fieldBedId: fieldBed.id, name },
+          { fieldBedId: fieldBed.id, name, irrigationType, soilType },
           'Field/bed created successfully'
         );
 

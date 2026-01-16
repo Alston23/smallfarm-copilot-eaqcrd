@@ -60,6 +60,12 @@ export const fieldsBeds = pgTable('fields_beds', {
   type: text('type', { enum: ['field', 'bed'] }).notNull(),
   squareFootage: numeric('square_footage', { precision: 12, scale: 2 }),
   acreage: numeric('acreage', { precision: 12, scale: 4 }),
+  irrigationType: text('irrigation_type', {
+    enum: ['drip', 'sprinkler', 'flood', 'manual', 'none'],
+  }),
+  soilType: text('soil_type', {
+    enum: ['clay', 'sandy', 'loam', 'silt', 'peat', 'chalk'],
+  }),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
