@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "SmallFarm Copilot",
@@ -10,7 +11,7 @@
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#22c55e"
+      "backgroundColor": "#2d5016"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,7 +25,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#22c55e"
+        "backgroundColor": "#2d5016"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.smallfarm.copilot",

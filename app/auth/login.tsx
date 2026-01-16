@@ -14,7 +14,8 @@ import {
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
-import { farmGreen, farmGreenDark } from "@/constants/Colors";
+import { farmGreen, farmGreenDark, farmGreenLight } from "@/constants/Colors";
+import { IconSymbol } from "@/components/IconSymbol";
 
 type Mode = "signin" | "signup";
 
@@ -32,7 +33,13 @@ export default function AuthScreen() {
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#fff" />
+        <IconSymbol 
+          ios_icon_name="leaf.fill" 
+          android_material_icon_name="eco" 
+          size={80} 
+          color="#fff" 
+        />
+        <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
       </View>
     );
   }
@@ -97,6 +104,16 @@ export default function AuthScreen() {
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.content}>
+          <View style={styles.logoContainer}>
+            <IconSymbol 
+              ios_icon_name="leaf.fill" 
+              android_material_icon_name="eco" 
+              size={80} 
+              color="#fff" 
+            />
+            <Text style={styles.appName}>SmallFarm Copilot</Text>
+          </View>
+
           <Text style={styles.title}>
             {mode === "signin" ? "Sign In" : "Sign Up"}
           </Text>
@@ -105,7 +122,7 @@ export default function AuthScreen() {
             <TextInput
               style={styles.input}
               placeholder="Name (optional)"
-              placeholderTextColor="#a3a3a3"
+              placeholderTextColor="#666"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
@@ -115,7 +132,7 @@ export default function AuthScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
-            placeholderTextColor="#a3a3a3"
+            placeholderTextColor="#666"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -126,7 +143,7 @@ export default function AuthScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
-            placeholderTextColor="#a3a3a3"
+            placeholderTextColor="#666"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -208,6 +225,17 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: "center",
   },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  appName: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginTop: 16,
+    textAlign: "center",
+  },
   title: {
     fontSize: 32,
     fontWeight: "bold",
@@ -218,17 +246,17 @@ const styles = StyleSheet.create({
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: "#fff",
+    borderColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 8,
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
     color: "#000",
   },
   primaryButton: {
     height: 50,
-    backgroundColor: farmGreenDark,
+    backgroundColor: farmGreenLight,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -259,7 +287,7 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "rgba(255, 255, 255, 0.3)",
   },
   dividerText: {
     marginHorizontal: 12,
@@ -269,7 +297,7 @@ const styles = StyleSheet.create({
   socialButton: {
     height: 50,
     borderWidth: 1,
-    borderColor: "#fff",
+    borderColor: "rgba(255, 255, 255, 0.3)",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",

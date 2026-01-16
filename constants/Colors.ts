@@ -1,9 +1,11 @@
 
-const tintColorLight = "#22c55e";
-const tintColorDark = "#4ade80";
+const tintColorLight = "#2d5016";
+const tintColorDark = "#4a7c2c";
 
-export const farmGreen = "#22c55e";
-export const farmGreenDark = "#16a34a";
+// Dark hunter green color palette
+export const farmGreen = "#2d5016"; // Dark hunter green
+export const farmGreenDark = "#1f3810"; // Even darker hunter green
+export const farmGreenLight = "#3d6b1f"; // Slightly lighter hunter green
 export const farmBrown = "#92400e";
 export const farmYellow = "#fbbf24";
 
@@ -30,22 +32,22 @@ export const borderColor = "#A1A1AA80";
 export const Colors = {
   light: {
     text: "#11181C",
-    background: "#22c55e", // Green background
+    background: "#2d5016", // Dark hunter green background
     tint: tintColorLight,
     icon: "#687076",
     tabIconDefault: "#687076",
     tabIconSelected: tintColorLight,
-    card: "#16a34a", // Darker green for cards
-    border: "#15803d",
+    card: "#3d6b1f", // Lighter hunter green for cards
+    border: "#4a7c2c",
   },
   dark: {
     text: "#ECEDEE",
-    background: "#16a34a", // Dark green background
+    background: "#1f3810", // Even darker hunter green background
     tint: tintColorDark,
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
     tabIconSelected: tintColorDark,
-    card: "#15803d", // Even darker green for cards
-    border: "#166534",
+    card: "#2d5016", // Dark hunter green for cards
+    border: "#3d6b1f",
   },
 };
