@@ -172,6 +172,13 @@ const FINANCIAL_REPORTS: ReportItem[] = [
   
   // Production Reports
   {
+    id: 'yield-per-crop',
+    title: 'Yield per Crop',
+    description: 'Track harvest amounts and yield percentages for each crop',
+    icon: 'agriculture',
+    category: 'Production',
+  },
+  {
     id: 'yield-revenue',
     title: 'Yield vs Revenue',
     description: 'Crop yields compared to revenue generated',
@@ -273,6 +280,13 @@ export default function FinancialReportsScreen() {
 
   const handleReportPress = (report: ReportItem) => {
     console.log('User tapped report:', report.title);
+    
+    // Navigate to specific report screens
+    if (report.id === 'yield-per-crop') {
+      router.push('/yield-chart');
+      return;
+    }
+    
     // TODO: Backend Integration - Implement individual report generation endpoints
     // For now, just log the selection
   };
