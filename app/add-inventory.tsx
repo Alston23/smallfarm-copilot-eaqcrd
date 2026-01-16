@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -53,6 +53,12 @@ const INVENTORY_CATEGORIES = {
       'Sprouting Seeds',
       'Other',
     ],
+  },
+  transplants: {
+    label: 'Transplants',
+    icon: 'local-florist',
+    useCrops: true,
+    subcategories: [],
   },
   value_add_materials: {
     label: 'Value-Add Materials',
@@ -169,6 +175,14 @@ const UNITS = [
   'packets',
 ];
 
+const TRANSPLANT_UNITS = ['individual plants', 'trays'];
+
+interface Crop {
+  id: string;
+  name: string;
+  category: string;
+}
+
 export default function AddInventoryScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -185,6 +199,40 @@ export default function AddInventoryScreen() {
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // For transplants
+  const [crops, setCrops] = useState<Crop[]>([]);
+  const [loadingCrops, setLoadingCrops] = useState(false);
+  const [selectedCrop, setSelectedCrop] = useState<string>('');
+
+  const loadCrops = useCallback(async () => {
+    setLoadingCrops(true);
+    try {
+      console.log('Loading crops for transplants');
+      const response = await fetch(`${BACKEND_URL}/api/crops`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`Loaded ${data.length} crops`);
+        setCrops(data);
+      }
+    } catch (error) {
+      console.error('Error loading crops:', error);
+    } finally {
+      setLoadingCrops(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    if (selectedCategory === 'transplants') {
+      loadCrops();
+      setUnit('individual plants');
+    }
+  }, [selectedCategory, loadCrops]);
+
   const handleCategorySelect = (category: string) => {
     console.log('User selected inventory category:', category);
     setSelectedCategory(category);
@@ -192,7 +240,12 @@ export default function AddInventoryScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!name.trim()) {
+    if (selectedCategory === 'transplants' && !selectedCrop) {
+      Alert.alert('Error', 'Please select a crop');
+      return;
+    }
+
+    if (!name.trim() && selectedCategory !== 'transplants') {
       Alert.alert('Error', 'Please enter an item name');
       return;
     }
@@ -212,13 +265,17 @@ export default function AddInventoryScreen() {
 
     setLoading(true);
     try {
+      const itemName = selectedCategory === 'transplants' 
+        ? crops.find(c => c.id === selectedCrop)?.name || name
+        : name.trim();
+
       const body = {
-        name: name.trim(),
+        name: itemName,
         category: selectedCategory,
         subcategory: subcategory || undefined,
         quantity,
         unit,
-        reorder_level: reorderLevel ? reorderLevel : undefined,
+        reorderLevel: reorderLevel ? reorderLevel : undefined,
         notes: notes.trim() || undefined,
       };
 
@@ -253,6 +310,9 @@ export default function AddInventoryScreen() {
       setLoading(false);
     }
   };
+
+  const isTransplants = selectedCategory === 'transplants';
+  const availableUnits = isTransplants ? TRANSPLANT_UNITS : UNITS;
 
   return (
     <SafeAreaView
@@ -330,63 +390,117 @@ export default function AddInventoryScreen() {
                 onPress={() => {
                   console.log('User tapped Change Category button');
                   setStep('category');
+                  setSelectedCrop('');
+                  setName('');
                 }}
               >
                 <Text style={[styles.changeButton, { color: farmGreen }]}>Change</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Item Name *</Text>
-              <TextInput
-                style={[
-                  styles.input,
-                  { backgroundColor: colors.card, color: colors.text, borderColor: colors.border },
-                ]}
-                value={name}
-                onChangeText={setName}
-                placeholder="e.g., 10-10-10 Fertilizer"
-                placeholderTextColor={colors.icon}
-              />
-            </View>
-
-            <View style={styles.formGroup}>
-              <Text style={[styles.label, { color: colors.text }]}>Type/Subcategory</Text>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.subcategoryScroll}
-              >
-                {INVENTORY_CATEGORIES[
-                  selectedCategory as keyof typeof INVENTORY_CATEGORIES
-                ]?.subcategories.map((sub) => (
-                  <TouchableOpacity
-                    key={sub}
-                    style={[
-                      styles.subcategoryChip,
-                      {
-                        backgroundColor:
-                          subcategory === sub ? farmGreen : colors.card,
-                        borderColor: subcategory === sub ? farmGreen : colors.border,
-                      },
-                    ]}
-                    onPress={() => {
-                      console.log('User selected subcategory:', sub);
-                      setSubcategory(sub);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.subcategoryText,
-                        { color: subcategory === sub ? '#fff' : colors.text },
-                      ]}
+            {isTransplants ? (
+              <>
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Select Crop *</Text>
+                  {loadingCrops ? (
+                    <View style={styles.loadingContainer}>
+                      <ActivityIndicator color={farmGreen} />
+                      <Text style={[styles.loadingText, { color: colors.icon }]}>
+                        Loading crops...
+                      </Text>
+                    </View>
+                  ) : (
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.cropScroll}
                     >
-                      {sub}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
+                      {crops.map((crop) => (
+                        <TouchableOpacity
+                          key={crop.id}
+                          style={[
+                            styles.cropChip,
+                            {
+                              backgroundColor:
+                                selectedCrop === crop.id ? farmGreen : colors.card,
+                              borderColor: selectedCrop === crop.id ? farmGreen : colors.border,
+                            },
+                          ]}
+                          onPress={() => {
+                            console.log('User selected crop:', crop.name);
+                            setSelectedCrop(crop.id);
+                            setName(crop.name);
+                          }}
+                        >
+                          <Text
+                            style={[
+                              styles.cropText,
+                              { color: selectedCrop === crop.id ? '#fff' : colors.text },
+                            ]}
+                          >
+                            {crop.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  )}
+                </View>
+              </>
+            ) : (
+              <>
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Item Name *</Text>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      { backgroundColor: colors.card, color: colors.text, borderColor: colors.border },
+                    ]}
+                    value={name}
+                    onChangeText={setName}
+                    placeholder="e.g., 10-10-10 Fertilizer"
+                    placeholderTextColor={colors.icon}
+                  />
+                </View>
+
+                <View style={styles.formGroup}>
+                  <Text style={[styles.label, { color: colors.text }]}>Type/Subcategory</Text>
+                  <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.subcategoryScroll}
+                  >
+                    {INVENTORY_CATEGORIES[
+                      selectedCategory as keyof typeof INVENTORY_CATEGORIES
+                    ]?.subcategories.map((sub) => (
+                      <TouchableOpacity
+                        key={sub}
+                        style={[
+                          styles.subcategoryChip,
+                          {
+                            backgroundColor:
+                              subcategory === sub ? farmGreen : colors.card,
+                            borderColor: subcategory === sub ? farmGreen : colors.border,
+                          },
+                        ]}
+                        onPress={() => {
+                          console.log('User selected subcategory:', sub);
+                          setSubcategory(sub);
+                        }}
+                      >
+                        <Text
+                          style={[
+                            styles.subcategoryText,
+                            { color: subcategory === sub ? '#fff' : colors.text },
+                          ]}
+                        >
+                          {sub}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </>
+            )}
 
             <View style={styles.row}>
               <View style={[styles.formGroup, { flex: 1, marginRight: 8 }]}>
@@ -415,7 +529,7 @@ export default function AddInventoryScreen() {
                   showsHorizontalScrollIndicator={false}
                   style={styles.unitScroll}
                 >
-                  {UNITS.map((u) => (
+                  {availableUnits.map((u) => (
                     <TouchableOpacity
                       key={u}
                       style={[
@@ -605,6 +719,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
   },
+  cropScroll: {
+    marginHorizontal: -20,
+    paddingHorizontal: 20,
+  },
+  cropChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  cropText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
   unitScroll: {
     marginHorizontal: -8,
     paddingHorizontal: 8,
@@ -619,6 +748,15 @@ const styles = StyleSheet.create({
   unitText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
   },
   submitButton: {
     flexDirection: 'row',

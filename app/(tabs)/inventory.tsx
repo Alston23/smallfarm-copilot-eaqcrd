@@ -36,6 +36,7 @@ interface InventoryItem {
 const CATEGORY_INFO: Record<string, { label: string; icon: string }> = {
   fertilizer: { label: 'Fertilizer', icon: 'science' },
   seeds: { label: 'Seeds', icon: 'spa' },
+  transplants: { label: 'Transplants', icon: 'local-florist' },
   value_add_materials: { label: 'Value-Add Materials', icon: 'inventory' },
   pesticides: { label: 'Pesticides & Pest Control', icon: 'bug-report' },
   tools: { label: 'Tools & Equipment', icon: 'build' },
