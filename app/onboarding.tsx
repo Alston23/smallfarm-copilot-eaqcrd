@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/contexts/AuthContext';
 import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
+import * as SecureStore from 'expo-secure-store';
 
 const { width } = Dimensions.get('window');
 
@@ -53,12 +53,12 @@ export default function OnboardingScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { updateOnboarding } = useAuth();
   
   const [currentPage, setCurrentPage] = useState(0);
   const [dontShowAgain, setDontShowAgain] = useState(false);
 
   const handleNext = () => {
+    console.log('User tapped Next button on onboarding page', currentPage + 1);
     if (currentPage < onboardingData.length - 1) {
       setCurrentPage(currentPage + 1);
     } else {
@@ -67,15 +67,29 @@ export default function OnboardingScreen() {
   };
 
   const handleSkip = async () => {
-    console.log('User skipped onboarding');
-    await updateOnboarding(true, !dontShowAgain);
-    router.replace('/(tabs)/crops');
+    console.log('User skipped onboarding, dont show again:', dontShowAgain);
+    try {
+      if (dontShowAgain) {
+        await SecureStore.setItemAsync('onboarding_completed', 'true');
+      }
+      router.replace('/(tabs)/crops');
+    } catch (error) {
+      console.error('Error saving onboarding preference:', error);
+      router.replace('/(tabs)/crops');
+    }
   };
 
   const handleComplete = async () => {
     console.log('User completed onboarding, dont show again:', dontShowAgain);
-    await updateOnboarding(true, !dontShowAgain);
-    router.replace('/(tabs)/crops');
+    try {
+      if (dontShowAgain) {
+        await SecureStore.setItemAsync('onboarding_completed', 'true');
+      }
+      router.replace('/(tabs)/crops');
+    } catch (error) {
+      console.error('Error saving onboarding preference:', error);
+      router.replace('/(tabs)/crops');
+    }
   };
 
   const currentData = onboardingData[currentPage];
