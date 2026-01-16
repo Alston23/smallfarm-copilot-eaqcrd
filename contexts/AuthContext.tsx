@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { Platform } from "react-native";
-import { authClient, storeWebBearerToken } from "@/lib/auth";
+import { authClient, storeWebBearerToken, BEARER_TOKEN_KEY } from "@/lib/auth";
 
 interface User {
   id: string;
@@ -11,6 +11,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  token: string | null;
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
   signUpWithEmail: (email: string, password: string, name?: string) => Promise<void>;
@@ -68,6 +69,7 @@ function openOAuthPopup(provider: string): Promise<string> {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,12 +82,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const session = await authClient.getSession();
       if (session?.data?.user) {
         setUser(session.data.user as User);
+        // Get token from storage
+        if (Platform.OS === "web") {
+          const storedToken = localStorage.getItem(BEARER_TOKEN_KEY);
+          setToken(storedToken);
+        } else {
+          const storedToken = await authClient.getToken();
+          setToken(storedToken?.token || null);
+        }
       } else {
         setUser(null);
+        setToken(null);
       }
     } catch (error) {
       console.error("Failed to fetch user:", error);
       setUser(null);
+      setToken(null);
     } finally {
       setLoading(false);
     }
@@ -152,6 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        token,
         loading,
         signInWithEmail,
         signUpWithEmail,

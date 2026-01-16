@@ -25,6 +25,8 @@ interface FieldBed {
   type: string;
   size_value: number;
   size_unit: string;
+  irrigation_type?: string;
+  soil_type?: string;
   crop?: {
     id: string;
     name: string;
@@ -115,6 +117,20 @@ export default function FieldsScreen() {
                     <Text style={[styles.cardType, { color: colors.icon }]}>
                       {item.type.charAt(0).toUpperCase() + item.type.slice(1)} • {item.size_value} {item.size_unit}
                     </Text>
+                    {(item.irrigation_type || item.soil_type) && (
+                      <View style={styles.detailsRow}>
+                        {item.irrigation_type && (
+                          <Text style={[styles.detailText, { color: colors.icon }]}>
+                            💧 {item.irrigation_type.charAt(0).toUpperCase() + item.irrigation_type.slice(1)}
+                          </Text>
+                        )}
+                        {item.soil_type && (
+                          <Text style={[styles.detailText, { color: colors.icon }]}>
+                            🌱 {item.soil_type.charAt(0).toUpperCase() + item.soil_type.slice(1)}
+                          </Text>
+                        )}
+                      </View>
+                    )}
                   </View>
                 </View>
                 {item.crop && (
@@ -210,6 +226,15 @@ const styles = StyleSheet.create({
   cardType: {
     fontSize: 14,
     marginTop: 4,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 8,
+  },
+  detailText: {
+    fontSize: 13,
   },
   cropInfo: {
     flexDirection: 'row',
