@@ -2,7 +2,7 @@ import { createApplication } from "@specific-dev/framework";
 import * as appSchema from './db/schema.js';
 import * as authSchema from './db/auth-schema.js';
 import { registerChatRoutes } from './routes/chat.js';
-import { registerCropRoutes } from './routes/crops.js';
+import { registerCropRoutes, seedSystemCrops } from './routes/crops.js';
 import { registerFieldsBedsRoutes } from './routes/fields-beds.js';
 import { registerScheduleRoutes } from './routes/schedules.js';
 import { registerInventoryRoutes } from './routes/inventory.js';
@@ -38,6 +38,9 @@ registerConsumerMarketplaceRoutes(app);
 registerEquipmentMarketplaceRoutes(app);
 registerUploadRoutes(app);
 registerAiRoutes(app);
+
+// Seed system crops on startup
+await seedSystemCrops(app);
 
 await app.run();
 app.logger.info('SmallFarm Copilot backend running');
