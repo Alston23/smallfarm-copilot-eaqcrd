@@ -143,6 +143,21 @@ export const financialPredictions = pgTable('financial_predictions', {
   updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
+// ===== Harvest Tracking =====
+export const harvests = pgTable('harvests', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
+  fieldBedCropId: uuid('field_bed_crop_id').notNull().references(() => fieldBedCrops.id, { onDelete: 'cascade' }),
+  cropId: uuid('crop_id').notNull().references(() => crops.id, { onDelete: 'cascade' }),
+  harvestAmount: numeric('harvest_amount', { precision: 12, scale: 2 }).notNull(),
+  harvestUnit: text('harvest_unit').notNull(),
+  yieldPercentage: numeric('yield_percentage', { precision: 5, scale: 2 }),
+  harvestDate: timestamp('harvest_date').notNull(),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
 // ===== Consumer Marketplace =====
 export const consumerListings = pgTable('consumer_listings', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -230,6 +245,7 @@ export const fieldBedCropsRelations = relations(fieldBedCrops, ({ one, many }) =
   schedules: many(schedules),
   financialData: many(financialTransactions),
   predictions: many(financialPredictions),
+  harvests: many(harvests),
 }));
 
 export const schedulesRelations = relations(schedules, ({ one }) => ({
@@ -270,5 +286,16 @@ export const equipmentInquiriesRelations = relations(equipmentInquiries, ({ one 
   listing: one(equipmentListings, {
     fields: [equipmentInquiries.listingId],
     references: [equipmentListings.id],
+  }),
+}));
+
+export const harvestsRelations = relations(harvests, ({ one }) => ({
+  fieldBedCrop: one(fieldBedCrops, {
+    fields: [harvests.fieldBedCropId],
+    references: [fieldBedCrops.id],
+  }),
+  crop: one(crops, {
+    fields: [harvests.cropId],
+    references: [crops.id],
   }),
 }));

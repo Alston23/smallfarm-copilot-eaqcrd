@@ -250,4 +250,115 @@ export function registerFinancialRoutes(app: App): void {
       }
     }
   );
+
+  // GET /api/financial/report/by-crop - Get financial report integrated with harvest data
+  app.fastify.get<{}>(
+    '/api/financial/report/by-crop',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      app.logger.info({}, 'Fetching financial report by crop');
+
+      const session = await requireAuth(request, reply);
+      if (!session) return;
+
+      try {
+        // Fetch all field bed crops with relations
+        const fieldBedCrops = await app.db.query.fieldBedCrops.findMany({
+          with: {
+            crop: true,
+            fieldBed: true,
+            harvests: true,
+            financialData: true,
+            predictions: true,
+          },
+        });
+
+        // Build report by crop
+        const reportByCrop = new Map<string, any>();
+
+        for (const fbc of fieldBedCrops) {
+          const cropId = fbc.cropId;
+          const cropName = fbc.crop.name;
+
+          if (!reportByCrop.has(cropId)) {
+            reportByCrop.set(cropId, {
+              cropId,
+              cropName,
+              totalCosts: 0,
+              totalRevenue: 0,
+              totalHarvestAmount: 0,
+              harvestUnit: '',
+              averageYield: 0,
+              harvestCount: 0,
+              netProfit: 0,
+              plantings: [],
+            });
+          }
+
+          const report = reportByCrop.get(cropId)!;
+
+          // Calculate costs for this crop
+          const cropCosts = fbc.financialData
+            .filter((t) => t.type === 'cost')
+            .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+          // Calculate revenue for this crop
+          const cropRevenue = fbc.financialData
+            .filter((t) => t.type === 'revenue')
+            .reduce((sum, t) => sum + parseFloat(t.amount.toString()), 0);
+
+          report.totalCosts += cropCosts;
+          report.totalRevenue += cropRevenue;
+          report.harvestCount += fbc.harvests.length;
+
+          // Add harvest data
+          if (fbc.harvests.length > 0) {
+            report.totalHarvestAmount += fbc.harvests.reduce(
+              (sum, h) => sum + parseFloat(h.harvestAmount.toString()),
+              0
+            );
+            report.harvestUnit = fbc.harvests[0].harvestUnit;
+
+            // Calculate average yield
+            const yieldPercentages = fbc.harvests
+              .filter((h) => h.yieldPercentage !== null)
+              .map((h) => parseFloat(h.yieldPercentage!.toString()));
+
+            if (yieldPercentages.length > 0) {
+              report.averageYield =
+                yieldPercentages.reduce((sum, val) => sum + val, 0) / yieldPercentages.length;
+            }
+          }
+
+          report.netProfit = report.totalRevenue - report.totalCosts;
+
+          // Add planting detail
+          report.plantings.push({
+            fieldBedCropId: fbc.id,
+            fieldBedName: fbc.fieldBed.name,
+            plantingDate: fbc.plantingDate,
+            harvestCount: fbc.harvests.length,
+            totalHarvest: fbc.harvests.reduce(
+              (sum, h) => sum + parseFloat(h.harvestAmount.toString()),
+              0
+            ),
+            costs: cropCosts,
+            revenue: cropRevenue,
+            profit: cropRevenue - cropCosts,
+          });
+        }
+
+        const reportArray = Array.from(reportByCrop.values());
+
+        app.logger.info(
+          { cropsInReport: reportArray.length },
+          'Financial report by crop fetched successfully'
+        );
+
+        return reportArray;
+      } catch (error) {
+        app.logger.error({ err: error }, 'Failed to fetch financial report by crop');
+        throw error;
+      }
+    }
+  );
 }
