@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "SmallFarm Copilot",
@@ -11,22 +10,29 @@
     "splash": {
       "image": "./assets/images/natively-dark.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#22c55e"
     },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.smallfarm.copilot",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "SmallFarm Copilot needs camera access to take photos of crops and equipment for marketplace listings and plant diagnosis.",
+        "NSPhotoLibraryUsageDescription": "SmallFarm Copilot needs photo library access to upload images of crops and equipment."
       }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#22c55e"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.smallfarm.copilot"
+      "package": "com.smallfarm.copilot",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "./assets/images/final_quest_240x240.png",
@@ -35,7 +41,13 @@
     "plugins": [
       "expo-font",
       "expo-router",
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "SmallFarm Copilot needs access to your photos to upload images of crops and equipment."
+        }
+      ]
     ],
     "scheme": "smallfarm-copilot",
     "experiments": {
