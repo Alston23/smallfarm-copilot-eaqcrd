@@ -8,6 +8,13 @@
       "when": 1768505228562,
       "tag": "20260115192708_fancy_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1768591054845,
+      "tag": "20260116191734_charming_cable",
+      "breakpoints": true
     }
   ]
 }

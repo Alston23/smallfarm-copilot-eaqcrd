@@ -34,6 +34,8 @@ interface ChatResponse {
 const SYSTEM_PROMPT = `You are a helpful farming assistant for small farm owners. Provide practical advice about crops, livestock, weather, pest control, soil management, and sustainable farming practices. Be concise and actionable.`;
 
 export function registerChatRoutes(app: App): void {
+  const requireAuth = app.requireAuth();
+
   // POST /api/chat - Send message and get AI response
   app.fastify.post<{ Body: ChatBody }>(
     '/api/chat',
@@ -41,6 +43,9 @@ export function registerChatRoutes(app: App): void {
       const { message, conversationId } = request.body;
 
       app.logger.info({ conversationId, messageLength: message.length }, 'Received chat message');
+
+      const session = await requireAuth(request, reply);
+      if (!session) return;
 
       try {
         let currentConversationId = conversationId;
@@ -54,6 +59,7 @@ export function registerChatRoutes(app: App): void {
           const [newConversation] = await app.db
             .insert(schema.conversations)
             .values({
+              userId: session.user.id,
               title: conversationTitle,
             })
             .returning();

@@ -1,6 +1,18 @@
 import { createApplication } from "@specific-dev/framework";
-import * as schema from './db/schema.js';
+import * as appSchema from './db/schema.js';
+import * as authSchema from './db/auth-schema.js';
 import { registerChatRoutes } from './routes/chat.js';
+import { registerCropRoutes } from './routes/crops.js';
+import { registerFieldsBedsRoutes } from './routes/fields-beds.js';
+import { registerScheduleRoutes } from './routes/schedules.js';
+import { registerInventoryRoutes } from './routes/inventory.js';
+import { registerFinancialRoutes } from './routes/financial.js';
+import { registerConsumerMarketplaceRoutes } from './routes/marketplace-consumer.js';
+import { registerEquipmentMarketplaceRoutes } from './routes/marketplace-equipment.js';
+import { registerUploadRoutes } from './routes/upload.js';
+import { registerAiRoutes } from './routes/ai.js';
+
+const schema = { ...appSchema, ...authSchema };
 
 // Create application with schema for full database type support
 export const app = await createApplication(schema);
@@ -8,9 +20,22 @@ export const app = await createApplication(schema);
 // Export App type for use in route files
 export type App = typeof app;
 
+// Enable authentication and storage
+app.withAuth();
+app.withStorage();
+
 // Register routes - add your route modules here
 // IMPORTANT: Always use registration functions to avoid circular dependency issues
 registerChatRoutes(app);
+registerCropRoutes(app);
+registerFieldsBedsRoutes(app);
+registerScheduleRoutes(app);
+registerInventoryRoutes(app);
+registerFinancialRoutes(app);
+registerConsumerMarketplaceRoutes(app);
+registerEquipmentMarketplaceRoutes(app);
+registerUploadRoutes(app);
+registerAiRoutes(app);
 
 await app.run();
-app.logger.info('Application running');
+app.logger.info('SmallFarm Copilot backend running');
