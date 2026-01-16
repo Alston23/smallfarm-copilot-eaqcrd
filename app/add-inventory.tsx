@@ -208,23 +208,24 @@ export default function AddInventoryScreen() {
     setLoadingCrops(true);
     try {
       console.log('Loading crops for transplants');
-      const response = await fetch(`${BACKEND_URL}/api/crops`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      // /api/crops is now a public endpoint, no authentication required
+      const response = await fetch(`${BACKEND_URL}/api/crops`);
 
       if (response.ok) {
         const data = await response.json();
         console.log(`Loaded ${data.length} crops`);
         setCrops(data);
+      } else {
+        console.error('Failed to load crops:', response.status, await response.text());
+        Alert.alert('Error', 'Failed to load crops. Please try again.');
       }
     } catch (error) {
       console.error('Error loading crops:', error);
+      Alert.alert('Error', 'Failed to load crops. Please check your connection.');
     } finally {
       setLoadingCrops(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     if (selectedCategory === 'transplants') {

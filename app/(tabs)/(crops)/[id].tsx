@@ -68,16 +68,27 @@ export default function CropDetailScreen() {
     setLoading(true);
     try {
       console.log('Loading crop detail for id:', id);
-      const response = await fetch(`${BACKEND_URL}/api/crops/${id}`, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
+      
+      // Fetch all crops since there's no individual crop endpoint
+      const response = await fetch(`${BACKEND_URL}/api/crops`);
 
       if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded crop detail:', data.name);
-        setCrop(data);
+        const allCrops = await response.json();
+        console.log(`Loaded ${allCrops.length} total crops, searching for id:`, id);
+        
+        // Find the specific crop by ID
+        const foundCrop = allCrops.find((c: any) => String(c.id) === String(id));
+        
+        if (foundCrop) {
+          console.log('Found crop detail:', foundCrop.name);
+          setCrop(foundCrop);
+        } else {
+          console.error('Crop not found with id:', id);
+          Alert.alert('Error', 'Crop not found. It may have been deleted.');
+          setCrop(null);
+        }
       } else {
-        console.error('Failed to load crop detail:', response.status);
+        console.error('Failed to load crops:', response.status, await response.text());
         Alert.alert('Error', 'Failed to load crop details. Please try again.');
       }
     } catch (error) {
@@ -86,7 +97,7 @@ export default function CropDetailScreen() {
     } finally {
       setLoading(false);
     }
-  }, [id, token]);
+  }, [id]);
 
   useEffect(() => {
     loadCropDetail();

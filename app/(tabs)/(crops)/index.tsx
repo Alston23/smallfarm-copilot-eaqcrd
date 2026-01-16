@@ -52,9 +52,9 @@ export default function CropsScreen() {
     try {
       console.log('Loading crops for category:', selectedCategory, 'search:', searchQuery);
       const url = `${BACKEND_URL}/api/crops`;
-      const response = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
+      
+      // Don't require authentication for browsing crops
+      const response = await fetch(url);
 
       if (response.ok) {
         const data = await response.json();
@@ -74,18 +74,21 @@ export default function CropsScreen() {
         console.log(`Filtered to ${filteredCrops.length} crops for ${selectedCategory}`);
         setCrops(filteredCrops);
       } else {
-        console.error('Failed to load crops:', response.status);
+        console.error('Failed to load crops:', response.status, await response.text());
         Alert.alert('Error', 'Failed to load crops. Please try again.');
+        setCrops([]);
       }
     } catch (error) {
       console.error('Error loading crops:', error);
       Alert.alert('Error', 'Failed to load crops. Please check your connection.');
+      setCrops([]);
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory, searchQuery, token]);
+  }, [selectedCategory, searchQuery]);
 
   useEffect(() => {
+    console.log('Category or search changed, reloading crops');
     loadCrops();
   }, [loadCrops]);
 
@@ -111,7 +114,10 @@ export default function CropsScreen() {
             placeholder="Search crops..."
             placeholderTextColor={colors.icon}
             value={searchQuery}
-            onChangeText={setSearchQuery}
+            onChangeText={(text) => {
+              console.log('User searching for:', text);
+              setSearchQuery(text);
+            }}
           />
         </View>
       </View>
@@ -135,6 +141,7 @@ export default function CropsScreen() {
             onPress={() => {
               console.log('User selected category:', category.id);
               setSelectedCategory(category.id);
+              setSearchQuery(''); // Clear search when changing category
             }}
           >
             <IconSymbol
@@ -159,6 +166,9 @@ export default function CropsScreen() {
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={farmGreen} />
+            <Text style={[styles.loadingText, { color: colors.icon }]}>
+              Loading {selectedCategory}...
+            </Text>
           </View>
         ) : crops.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -169,14 +179,17 @@ export default function CropsScreen() {
               color={colors.icon}
             />
             <Text style={[styles.emptyText, { color: colors.icon }]}>
-              {searchQuery ? 'No crops found' : 'No crops available'}
+              {searchQuery ? `No ${selectedCategory} found matching "${searchQuery}"` : `No ${selectedCategory} available yet`}
+            </Text>
+            <Text style={[styles.emptySubtext, { color: colors.icon }]}>
+              {searchQuery ? 'Try a different search term' : 'Check back soon or add a custom crop'}
             </Text>
           </View>
         ) : (
           <>
             <View style={styles.countContainer}>
               <Text style={[styles.countText, { color: colors.icon }]}>
-                {crops.length} {selectedCategory} available
+                {crops.length} {selectedCategory} {searchQuery ? `matching "${searchQuery}"` : 'available'}
               </Text>
             </View>
             {crops.map((crop, index) => (
@@ -293,13 +306,25 @@ const styles = StyleSheet.create({
     paddingVertical: 48,
     alignItems: 'center',
   },
+  loadingText: {
+    fontSize: 16,
+    marginTop: 16,
+  },
   emptyContainer: {
     paddingVertical: 48,
     alignItems: 'center',
+    paddingHorizontal: 40,
   },
   emptyText: {
-    fontSize: 16,
+    fontSize: 18,
     marginTop: 16,
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  emptySubtext: {
+    fontSize: 14,
+    marginTop: 8,
+    textAlign: 'center',
   },
   countContainer: {
     marginBottom: 12,
