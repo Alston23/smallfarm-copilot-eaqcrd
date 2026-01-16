@@ -30,22 +30,22 @@ export const borderColor = "#A1A1AA80";
 export const Colors = {
   light: {
     text: "#11181C",
-    background: "#fff",
+    background: "#22c55e", // Green background
     tint: tintColorLight,
     icon: "#687076",
     tabIconDefault: "#687076",
     tabIconSelected: tintColorLight,
-    card: "#f9fafb",
-    border: "#e5e7eb",
+    card: "#16a34a", // Darker green for cards
+    border: "#15803d",
   },
   dark: {
     text: "#ECEDEE",
-    background: "#0a0a0a",
+    background: "#16a34a", // Dark green background
     tint: tintColorDark,
     icon: "#9BA1A6",
     tabIconDefault: "#9BA1A6",
     tabIconSelected: tintColorDark,
-    card: "#1a1a1a",
-    border: "#27272a",
+    card: "#15803d", // Even darker green for cards
+    border: "#166534",
   },
 };

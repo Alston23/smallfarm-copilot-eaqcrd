@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import {
   View,
@@ -13,6 +14,7 @@ import {
 } from "react-native";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
+import { farmGreen, farmGreenDark } from "@/constants/Colors";
 
 type Mode = "signin" | "signup";
 
@@ -30,12 +32,13 @@ export default function AuthScreen() {
   if (authLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color="#fff" />
       </View>
     );
   }
 
   const handleEmailAuth = async () => {
+    console.log("User tapped email auth button", { mode, email });
     if (!email || !password) {
       Alert.alert("Error", "Please enter email and password");
       return;
@@ -44,17 +47,22 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       if (mode === "signin") {
+        console.log("Attempting sign in with email");
         await signInWithEmail(email, password);
+        console.log("Sign in successful, navigating to onboarding");
         router.replace("/onboarding");
       } else {
+        console.log("Attempting sign up with email");
         await signUpWithEmail(email, password, name);
         Alert.alert(
           "Success",
           "Account created! Please check your email to verify your account."
         );
+        console.log("Sign up successful, navigating to onboarding");
         router.replace("/onboarding");
       }
     } catch (error: any) {
+      console.log("Email auth error:", error);
       Alert.alert("Error", error.message || "Authentication failed");
     } finally {
       setLoading(false);
@@ -62,6 +70,7 @@ export default function AuthScreen() {
   };
 
   const handleSocialAuth = async (provider: "google" | "apple" | "github") => {
+    console.log("User tapped social auth button:", provider);
     setLoading(true);
     try {
       if (provider === "google") {
@@ -71,8 +80,10 @@ export default function AuthScreen() {
       } else if (provider === "github") {
         await signInWithGitHub();
       }
+      console.log("Social auth successful, navigating to onboarding");
       router.replace("/onboarding");
     } catch (error: any) {
+      console.log("Social auth error:", error);
       Alert.alert("Error", error.message || "Authentication failed");
     } finally {
       setLoading(false);
@@ -94,6 +105,7 @@ export default function AuthScreen() {
             <TextInput
               style={styles.input}
               placeholder="Name (optional)"
+              placeholderTextColor="#a3a3a3"
               value={name}
               onChangeText={setName}
               autoCapitalize="words"
@@ -103,6 +115,7 @@ export default function AuthScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email"
+            placeholderTextColor="#a3a3a3"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -113,6 +126,7 @@ export default function AuthScreen() {
           <TextInput
             style={styles.input}
             placeholder="Password"
+            placeholderTextColor="#a3a3a3"
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -178,13 +192,13 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: farmGreen,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: farmGreen,
   },
   scrollContent: {
     flexGrow: 1,
@@ -199,21 +213,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 32,
     textAlign: "center",
-    color: "#000",
+    color: "#fff",
   },
   input: {
     height: 50,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#fff",
     borderRadius: 8,
     paddingHorizontal: 16,
     marginBottom: 16,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    color: "#000",
   },
   primaryButton: {
     height: 50,
-    backgroundColor: "#007AFF",
+    backgroundColor: farmGreenDark,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
@@ -232,8 +247,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   switchModeText: {
-    color: "#007AFF",
+    color: "#fff",
     fontSize: 14,
+    fontWeight: "500",
   },
   divider: {
     flexDirection: "row",
@@ -243,17 +259,17 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: "#ddd",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
   },
   dividerText: {
     marginHorizontal: 12,
-    color: "#666",
+    color: "#fff",
     fontSize: 14,
   },
   socialButton: {
     height: 50,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#fff",
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
