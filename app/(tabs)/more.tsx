@@ -55,7 +55,7 @@ export default function MoreScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleLogout = () => {
     Alert.alert(
@@ -68,7 +68,7 @@ export default function MoreScreen() {
           style: 'destructive',
           onPress: async () => {
             console.log('User logging out');
-            await logout();
+            await signOut();
             router.replace('/auth/login');
           },
         },
