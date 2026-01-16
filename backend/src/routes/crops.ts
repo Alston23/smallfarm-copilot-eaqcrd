@@ -289,6 +289,7 @@ export async function seedSystemCrops(app: App) {
   app.logger.info({}, 'Starting system crops seed');
 
   try {
+    let seedCount = 0;
     for (const crop of SYSTEM_CROPS) {
       // Check if crop already exists
       const existing = await app.db.query.crops.findFirst({
@@ -313,10 +314,11 @@ export async function seedSystemCrops(app: App) {
           isCustom: false,
           userId: null,
         });
+        seedCount++;
       }
     }
 
-    app.logger.info({ seedCount: SYSTEM_CROPS.length }, 'System crops seed completed');
+    app.logger.info({ seedCount }, 'System crops seed completed');
   } catch (error) {
     app.logger.error({ err: error }, 'Failed to seed system crops');
   }
