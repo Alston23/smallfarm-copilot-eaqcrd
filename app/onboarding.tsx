@@ -71,11 +71,12 @@ export default function OnboardingScreen() {
     try {
       if (dontShowAgain) {
         await SecureStore.setItemAsync('onboarding_completed', 'true');
+        console.log('Onboarding preference saved to SecureStore');
       }
-      router.replace('/(tabs)/crops');
+      router.replace('/(tabs)/(crops)');
     } catch (error) {
       console.error('Error saving onboarding preference:', error);
-      router.replace('/(tabs)/crops');
+      router.replace('/(tabs)/(crops)');
     }
   };
 
@@ -84,11 +85,12 @@ export default function OnboardingScreen() {
     try {
       if (dontShowAgain) {
         await SecureStore.setItemAsync('onboarding_completed', 'true');
+        console.log('Onboarding preference saved to SecureStore');
       }
-      router.replace('/(tabs)/crops');
+      router.replace('/(tabs)/(crops)');
     } catch (error) {
       console.error('Error saving onboarding preference:', error);
-      router.replace('/(tabs)/crops');
+      router.replace('/(tabs)/(crops)');
     }
   };
 
