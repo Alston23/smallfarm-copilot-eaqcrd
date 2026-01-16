@@ -25,7 +25,7 @@ const categories = [
   { id: 'vegetables', label: 'Vegetables', icon: 'eco', iosIcon: 'leaf.fill' },
   { id: 'fruits', label: 'Fruits', icon: 'apple', iosIcon: 'apple.logo' },
   { id: 'herbs', label: 'Herbs', icon: 'spa', iosIcon: 'sparkles' },
-  { id: 'flowers', label: 'flowers', icon: 'local-florist', iosIcon: 'flower.fill' },
+  { id: 'flowers', label: 'Flowers', icon: 'local-florist', iosIcon: 'flower.fill' },
 ];
 
 interface Crop {
