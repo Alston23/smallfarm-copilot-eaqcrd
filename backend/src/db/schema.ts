@@ -231,6 +231,22 @@ export const equipmentInquiries = pgTable('equipment_inquiries', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
+// ===== Equipment Inventory =====
+export const equipment = pgTable('equipment', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
+  equipmentType: text('equipment_type').notNull(),
+  make: text('make').notNull(),
+  model: text('model').notNull(),
+  hours: numeric('hours', { precision: 12, scale: 2 }),
+  lastServiceDate: timestamp('last_service_date'),
+  nextServiceDate: timestamp('next_service_date'),
+  serviceIntervalHours: numeric('service_interval_hours', { precision: 12, scale: 2 }),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
 // ===== Relations =====
 export const conversationsRelations = relations(conversations, ({ many }) => ({
   messages: many(messages),
@@ -315,3 +331,5 @@ export const harvestsRelations = relations(harvests, ({ one }) => ({
 }));
 
 export const weatherAlertsRelations = relations(weatherAlerts, ({}) => ({}));
+
+export const equipmentRelations = relations(equipment, ({}) => ({}));
