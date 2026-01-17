@@ -9,7 +9,6 @@ import {
   TextInput,
   useColorScheme,
   ActivityIndicator,
-  Alert,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -46,9 +45,11 @@ export default function CropsScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [crops, setCrops] = useState<Crop[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadCrops = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       console.log('Loading crops for category:', selectedCategory, 'search:', searchQuery);
       const url = `${BACKEND_URL}/api/crops`;
@@ -74,13 +75,14 @@ export default function CropsScreen() {
         console.log(`Filtered to ${filteredCrops.length} crops for ${selectedCategory}`);
         setCrops(filteredCrops);
       } else {
-        console.error('Failed to load crops:', response.status, await response.text());
-        Alert.alert('Error', 'Failed to load crops. Please try again.');
+        const errorText = await response.text();
+        console.error('Failed to load crops:', response.status, errorText);
+        setError(`Unable to load crops (Error ${response.status}). The backend is being updated, please try again in a moment.`);
         setCrops([]);
       }
     } catch (error) {
       console.error('Error loading crops:', error);
-      Alert.alert('Error', 'Failed to load crops. Please check your connection.');
+      setError('Unable to connect to the server. Please check your internet connection and try again.');
       setCrops([]);
     } finally {
       setLoading(false);
@@ -169,6 +171,33 @@ export default function CropsScreen() {
             <Text style={[styles.loadingText, { color: colors.icon }]}>
               Loading {selectedCategory}...
             </Text>
+          </View>
+        ) : error ? (
+          <View style={styles.errorContainer}>
+            <IconSymbol
+              ios_icon_name="exclamationmark.triangle.fill"
+              android_material_icon_name="warning"
+              size={64}
+              color="#ff9500"
+            />
+            <Text style={[styles.errorText, { color: colors.text }]}>
+              {error}
+            </Text>
+            <TouchableOpacity
+              style={[styles.retryButton, { backgroundColor: farmGreen }]}
+              onPress={() => {
+                console.log('User tapped retry button');
+                loadCrops();
+              }}
+            >
+              <IconSymbol
+                ios_icon_name="arrow.clockwise"
+                android_material_icon_name="refresh"
+                size={20}
+                color="#fff"
+              />
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </TouchableOpacity>
           </View>
         ) : crops.length === 0 ? (
           <View style={styles.emptyContainer}>
@@ -309,6 +338,31 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 16,
     marginTop: 16,
+  },
+  errorContainer: {
+    paddingVertical: 48,
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  errorText: {
+    fontSize: 16,
+    marginTop: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  retryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 24,
+    gap: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   emptyContainer: {
     paddingVertical: 48,
