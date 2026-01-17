@@ -69,33 +69,7 @@ export default function WeatherInsightsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadWeatherData = useCallback(async () => {
-    try {
-      console.log('Loading weather forecast');
-      const response = await fetch(`${BACKEND_URL}/api/weather/forecast`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Weather data loaded:', data);
-        setWeatherData(data);
-        
-        // Load schedules and analyze weather impact
-        await analyzeWeatherImpact(data);
-      } else {
-        console.error('Failed to load weather data:', response.status);
-        setError('Unable to load weather data. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error loading weather data:', error);
-      setError('Unable to connect to the server. Please check your internet connection.');
-    }
-  }, [token]);
-
-  const analyzeWeatherImpact = async (weather: WeatherData) => {
+  const analyzeWeatherImpact = useCallback(async (weather: WeatherData) => {
     try {
       console.log('Analyzing weather impact on schedules');
       
@@ -152,7 +126,33 @@ export default function WeatherInsightsScreen() {
     } catch (error) {
       console.error('Error analyzing weather impact:', error);
     }
-  };
+  }, [token]);
+
+  const loadWeatherData = useCallback(async () => {
+    try {
+      console.log('Loading weather forecast');
+      const response = await fetch(`${BACKEND_URL}/api/weather/forecast`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Weather data loaded:', data);
+        setWeatherData(data);
+        
+        // Load schedules and analyze weather impact
+        await analyzeWeatherImpact(data);
+      } else {
+        console.error('Failed to load weather data:', response.status);
+        setError('Unable to load weather data. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error loading weather data:', error);
+      setError('Unable to connect to the server. Please check your internet connection.');
+    }
+  }, [token, analyzeWeatherImpact]);
 
   const loadData = useCallback(async () => {
     setLoading(true);

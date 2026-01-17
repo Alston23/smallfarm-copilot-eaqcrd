@@ -1,5 +1,4 @@
 
-import React from 'react';
 import {
   View,
   Text,
@@ -11,10 +10,11 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import React from 'react';
 import { BlurView } from 'expo-blur';
-import { IconSymbol } from '@/components/IconSymbol';
 import { Colors, farmGreen } from '@/constants/Colors';
-import { usePlacement, useUser } from 'expo-superwall';
+import { IconSymbol } from '@/components/IconSymbol';
+import Constants from 'expo-constants';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -37,47 +37,60 @@ export default function SubscriptionModal({
 }: SubscriptionModalProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { subscriptionStatus } = useUser();
   
-  const { registerPlacement, state: placementState } = usePlacement({
-    onError: (err) => {
-      console.error('❌ Paywall Error:', err);
-      Alert.alert('Error', 'Unable to load subscription options. Please try again.');
-    },
-    onPresent: (info) => {
-      console.log('✅ Paywall Presented:', info);
-    },
-    onDismiss: (info, result) => {
-      console.log('📱 Paywall Dismissed:', info, 'Result:', result);
-      if (result === 'purchased' || result === 'restored') {
-        Alert.alert(
-          'Success!',
-          'You now have access to all premium features.',
-          [{ text: 'OK', onPress: onClose }]
-        );
-      }
-    },
-  });
+  // Check if Superwall is available
+  const isExpoGo = Constants.appOwnership === 'expo';
+  const superwallAvailable = !isExpoGo && Platform.OS !== 'web';
+
+  // Try to get Superwall hooks if available - hooks must be called unconditionally
+  let superwallUser: any = null;
+  let placement: any = null;
+  
+  try {
+    if (superwallAvailable) {
+      const superwall = require('expo-superwall');
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      superwallUser = superwall.useUser();
+      // eslint-disable-next-line react-hooks/rules-of-hooks
+      placement = superwall.usePlacement('premium_features');
+    }
+  } catch (error) {
+    console.warn('⚠️ Superwall hooks not available:', error);
+  }
 
   const handleSubscribe = async () => {
-    console.log('🔐 User tapped Subscribe button for:', featureName);
-    console.log('📊 Current subscription status:', subscriptionStatus?.status);
-    
+    console.log('🔔 User tapped Subscribe button for:', featureName);
+
+    if (!superwallAvailable) {
+      // Show message for Expo Go users
+      Alert.alert(
+        'Subscription Not Available',
+        'Subscriptions are only available in the production app. This is a development preview.\n\nIn the full app, you would be able to subscribe for $12.99/month to unlock all premium features.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    if (!placement) {
+      Alert.alert(
+        'Subscription Setup Required',
+        'Subscription system is being configured. Please try again later.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
     try {
-      await registerPlacement({
-        placement: 'premium_features',
-        feature() {
-          console.log('✅ Feature unlocked! User has access to:', featureName);
-          Alert.alert(
-            'Welcome to Premium!',
-            `You now have access to ${featureName} and all other premium features.`,
-            [{ text: 'Get Started', onPress: onClose }]
-          );
-        },
-      });
+      console.log('🚀 Presenting Superwall paywall for placement: premium_features');
+      await placement.present();
+      console.log('✅ Paywall presented successfully');
     } catch (error) {
-      console.error('❌ Error registering placement:', error);
-      Alert.alert('Error', 'Unable to show subscription options. Please try again.');
+      console.error('❌ Error presenting paywall:', error);
+      Alert.alert(
+        'Subscription Error',
+        'Unable to load subscription options. Please try again later.',
+        [{ text: 'OK' }]
+      );
     }
   };
 
@@ -88,34 +101,28 @@ export default function SubscriptionModal({
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <BlurView intensity={20} style={StyleSheet.absoluteFill} tint={colorScheme === 'dark' ? 'dark' : 'light'}>
-          <TouchableOpacity 
-            style={styles.modalBackdrop} 
-            activeOpacity={1} 
-            onPress={onClose}
-          />
-        </BlurView>
-        
+      <BlurView intensity={80} style={styles.blurContainer}>
         <View style={[styles.modalContent, { backgroundColor: colors.background }]}>
-          <TouchableOpacity 
+          {/* Close button */}
+          <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
             <IconSymbol
               ios_icon_name="xmark.circle.fill"
-              android_material_icon_name="close"
+              android_material_icon_name="cancel"
               size={28}
-              color={colors.icon}
+              color={colors.text}
             />
           </TouchableOpacity>
 
-          <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+          <ScrollView
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <View style={[styles.iconContainer, { backgroundColor: `${farmGreen}20` }]}>
+            {/* Feature icon */}
+            <View style={[styles.iconContainer, { backgroundColor: farmGreen + '20' }]}>
               <IconSymbol
                 ios_icon_name={featureIosIcon}
                 android_material_icon_name={featureIcon}
@@ -124,39 +131,23 @@ export default function SubscriptionModal({
               />
             </View>
 
-            <View style={styles.lockBadge}>
-              <IconSymbol
-                ios_icon_name="lock.fill"
-                android_material_icon_name="lock"
-                size={16}
-                color="#fff"
-              />
-              <Text style={styles.lockText}>Premium Feature</Text>
-            </View>
-
-            <Text style={[styles.modalTitle, { color: colors.text }]}>
-              Subscribe to Unlock {featureName}
+            {/* Title */}
+            <Text style={[styles.title, { color: colors.text }]}>
+              Unlock {featureName}
             </Text>
 
-            <Text style={[styles.modalSubtitle, { color: colors.icon }]}>
-              This feature requires a premium subscription to access all its powerful capabilities.
+            {/* Description */}
+            <Text style={[styles.description, { color: colors.text }]}>
+              {featureDescription}
             </Text>
 
-            <View style={[styles.descriptionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                What is {featureName}?
-              </Text>
-              <Text style={[styles.descriptionText, { color: colors.icon }]}>
-                {featureDescription}
-              </Text>
-            </View>
-
-            <View style={[styles.benefitsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                Why You&apos;ll Love This Feature
+            {/* Benefits */}
+            <View style={styles.benefitsContainer}>
+              <Text style={[styles.benefitsTitle, { color: colors.text }]}>
+                Why Subscribe?
               </Text>
               {featureBenefits.map((benefit, index) => (
-                <View key={index} style={styles.benefitItem}>
+                <View key={index} style={styles.benefitRow}>
                   <IconSymbol
                     ios_icon_name="checkmark.circle.fill"
                     android_material_icon_name="check-circle"
@@ -170,210 +161,176 @@ export default function SubscriptionModal({
               ))}
             </View>
 
-            <View style={[styles.pricingCard, { backgroundColor: `${farmGreen}15`, borderColor: farmGreen }]}>
-              <Text style={[styles.pricingTitle, { color: colors.text }]}>
-                Premium Subscription
+            {/* Pricing */}
+            <View style={[styles.pricingCard, { backgroundColor: farmGreen + '10' }]}>
+              <Text style={[styles.priceAmount, { color: farmGreen }]}>
+                $12.99
               </Text>
-              <View style={styles.priceRow}>
-                <Text style={[styles.priceAmount, { color: farmGreen }]}>
-                  $12.99
-                </Text>
-                <Text style={[styles.pricePeriod, { color: colors.icon }]}>
-                  /month
-                </Text>
-              </View>
-              <Text style={[styles.pricingFeatures, { color: colors.icon }]}>
-                • Access to all premium features{'\n'}
-                • AI-powered insights and recommendations{'\n'}
-                • Advanced financial reports{'\n'}
-                • Marketplace access{'\n'}
-                • Weather forecasting{'\n'}
-                • Priority support
+              <Text style={[styles.priceInterval, { color: colors.text }]}>
+                per month
+              </Text>
+              <Text style={[styles.priceDescription, { color: colors.text }]}>
+                Cancel anytime • Full access to all features
               </Text>
             </View>
 
-            <TouchableOpacity 
+            {/* Subscribe button */}
+            <TouchableOpacity
               style={[styles.subscribeButton, { backgroundColor: farmGreen }]}
               onPress={handleSubscribe}
             >
-              <Text style={styles.subscribeButtonText}>Subscribe Now - $12.99/month</Text>
-              <IconSymbol
-                ios_icon_name="arrow.right.circle.fill"
-                android_material_icon_name="arrow-forward"
-                size={24}
-                color="#fff"
-              />
+              <Text style={styles.subscribeButtonText}>
+                {superwallAvailable ? 'Subscribe Now' : 'View Subscription Info'}
+              </Text>
             </TouchableOpacity>
 
-            <Text style={[styles.disclaimer, { color: colors.icon }]}>
-              Cancel anytime. Works on iOS, Android, and web.
+            {/* Development notice */}
+            {!superwallAvailable && (
+              <View style={[styles.devNotice, { backgroundColor: colors.text + '10' }]}>
+                <IconSymbol
+                  ios_icon_name="info.circle"
+                  android_material_icon_name="info"
+                  size={16}
+                  color={colors.text}
+                />
+                <Text style={[styles.devNoticeText, { color: colors.text }]}>
+                  {isExpoGo 
+                    ? 'Subscriptions available in production app'
+                    : 'Subscriptions available on iOS and Android'}
+                </Text>
+              </View>
+            )}
+
+            {/* Terms */}
+            <Text style={[styles.terms, { color: colors.text }]}>
+              By subscribing, you agree to our Terms of Service and Privacy Policy.
+              Subscription automatically renews unless cancelled.
             </Text>
           </ScrollView>
         </View>
-      </View>
+      </BlurView>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  modalOverlay: {
+  blurContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
+    padding: 20,
   },
   modalContent: {
-    width: '90%',
+    width: '100%',
     maxWidth: 500,
-    maxHeight: '85%',
-    borderRadius: 24,
-    overflow: 'hidden',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.3,
-        shadowRadius: 20,
-      },
-      android: {
-        elevation: 10,
-      },
-    }),
+    maxHeight: '90%',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   closeButton: {
     position: 'absolute',
     top: 16,
     right: 16,
     zIndex: 10,
-    padding: 4,
-  },
-  scrollView: {
-    flex: 1,
   },
   scrollContent: {
-    padding: 24,
-    paddingTop: 32,
+    paddingTop: 20,
   },
   iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
     alignSelf: 'center',
-    marginBottom: 16,
-  },
-  lockBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'center',
-    backgroundColor: '#ef4444',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
     marginBottom: 20,
   },
-  lockText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  modalTitle: {
-    fontSize: 24,
+  title: {
+    fontSize: 28,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 12,
   },
-  modalSubtitle: {
+  description: {
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 22,
+    opacity: 0.8,
   },
-  descriptionCard: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 16,
+  benefitsContainer: {
+    marginBottom: 24,
   },
-  benefitsCard: {
-    padding: 20,
-    borderRadius: 16,
-    borderWidth: 1,
-    marginBottom: 16,
-  },
-  sectionTitle: {
+  benefitsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     marginBottom: 12,
   },
-  descriptionText: {
-    fontSize: 15,
-    lineHeight: 22,
-  },
-  benefitItem: {
+  benefitRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 12,
-    gap: 12,
   },
   benefitText: {
-    flex: 1,
     fontSize: 15,
-    lineHeight: 22,
+    marginLeft: 12,
+    flex: 1,
+    lineHeight: 20,
   },
   pricingCard: {
     padding: 20,
-    borderRadius: 16,
-    borderWidth: 2,
-    marginBottom: 24,
+    borderRadius: 12,
     alignItems: 'center',
-  },
-  pricingTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  priceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   priceAmount: {
     fontSize: 36,
     fontWeight: 'bold',
   },
-  pricePeriod: {
-    fontSize: 18,
-    marginLeft: 4,
+  priceInterval: {
+    fontSize: 16,
+    marginTop: 4,
+    opacity: 0.8,
   },
-  pricingFeatures: {
-    fontSize: 14,
-    lineHeight: 22,
-    textAlign: 'left',
-    width: '100%',
+  priceDescription: {
+    fontSize: 13,
+    marginTop: 8,
+    opacity: 0.6,
+    textAlign: 'center',
   },
   subscribeButton: {
-    flexDirection: 'row',
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 18,
-    borderRadius: 16,
-    gap: 8,
     marginBottom: 12,
   },
   subscribeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
   },
-  disclaimer: {
+  devNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 8,
+  },
+  devNoticeText: {
     fontSize: 12,
+    opacity: 0.7,
+  },
+  terms: {
+    fontSize: 11,
     textAlign: 'center',
-    marginBottom: 8,
+    opacity: 0.5,
+    lineHeight: 16,
   },
 });

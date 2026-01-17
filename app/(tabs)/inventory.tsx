@@ -33,6 +33,11 @@ interface InventoryItem {
   updated_at: string;
 }
 
+interface InventoryAlert {
+  lowStockItems: InventoryItem[];
+  storageAlerts: Array<{ type: string; percentage: number; message: string }>;
+}
+
 const CATEGORY_INFO: Record<string, { icon: string; iosIcon: string; label: string }> = {
   fertilizer: { icon: 'eco', iosIcon: 'leaf.fill', label: 'Fertilizer' },
   seeds: { icon: 'spa', iosIcon: 'sparkles', label: 'Seeds' },
@@ -51,10 +56,7 @@ export default function InventoryScreen() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
-  const [alerts, setAlerts] = useState<{
-    lowStockItems: InventoryItem[];
-    storageAlerts: Array<{ type: string; percentage: number; message: string }>;
-  }>({ lowStockItems: [], storageAlerts: [] });
+  const [alerts, setAlerts] = useState<InventoryAlert>({ lowStockItems: [], storageAlerts: [] });
 
   const loadInventory = useCallback(async () => {
     setLoading(true);

@@ -52,11 +52,7 @@ export default function StorageManagementScreen() {
   const [dryCapacity, setDryCapacity] = useState('');
   const [dryUsed, setDryUsed] = useState('');
 
-  useEffect(() => {
-    loadStorage();
-  }, []);
-
-  const loadStorage = async () => {
+  const loadStorage = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading storage information');
@@ -79,7 +75,11 @@ export default function StorageManagementScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    loadStorage();
+  }, [loadStorage]);
 
   const handleSave = async () => {
     console.log('User saving storage information');

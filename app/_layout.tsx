@@ -1,7 +1,7 @@
 
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useFonts } from "expo-font";
-import { useColorScheme } from "react-native";
+import { useColorScheme, Platform, View, ActivityIndicator } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import "react-native-reanimated";
 import { SystemBars } from "react-native-edge-to-edge";
@@ -16,21 +16,11 @@ import React, { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Constants from "expo-constants";
-import { SuperwallProvider, SuperwallLoading, SuperwallLoaded } from "expo-superwall";
-import { ActivityIndicator, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
 // Log backend URL at app startup for debugging
 console.log('🌐 Backend URL:', Constants.expoConfig?.extra?.backendUrl);
-
-// Superwall API keys - Replace with your actual keys from Superwall dashboard
-const SUPERWALL_API_KEYS = {
-  ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_API_KEY || "YOUR_IOS_API_KEY",
-  android: process.env.EXPO_PUBLIC_SUPERWALL_ANDROID_API_KEY || "YOUR_ANDROID_API_KEY",
-};
-
-console.log('🔐 Superwall configured for platforms:', Object.keys(SUPERWALL_API_KEYS).filter(k => SUPERWALL_API_KEYS[k as keyof typeof SUPERWALL_API_KEYS] !== `YOUR_${k.toUpperCase()}_API_KEY`));
 
 function AppContent() {
   const colorScheme = useColorScheme();
@@ -73,21 +63,46 @@ function AppContent() {
 }
 
 export default function RootLayout() {
-  return (
-    <SuperwallProvider
-      apiKeys={SUPERWALL_API_KEYS}
-      onConfigurationError={(error) => {
-        console.error('❌ Superwall configuration failed:', error);
-      }}
-    >
-      <SuperwallLoading>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#4CAF50" />
-        </View>
-      </SuperwallLoading>
-      <SuperwallLoaded>
-        <AppContent />
-      </SuperwallLoaded>
-    </SuperwallProvider>
-  );
+  // Check if we're in a development build or Expo Go
+  const isExpoGo = Constants.appOwnership === 'expo';
+  
+  console.log('📱 Running in:', isExpoGo ? 'Expo Go (Superwall disabled)' : 'Development Build (Superwall enabled)');
+
+  // Only use Superwall if we're NOT in Expo Go
+  if (!isExpoGo && Platform.OS !== 'web') {
+    try {
+      // Dynamically import Superwall only when needed
+      const { SuperwallProvider, SuperwallLoading, SuperwallLoaded } = require("expo-superwall");
+      
+      const SUPERWALL_API_KEYS = {
+        ios: process.env.EXPO_PUBLIC_SUPERWALL_IOS_API_KEY || "YOUR_IOS_API_KEY",
+        android: process.env.EXPO_PUBLIC_SUPERWALL_ANDROID_API_KEY || "YOUR_ANDROID_API_KEY",
+      };
+
+      console.log('🔐 Superwall configured for platforms:', Object.keys(SUPERWALL_API_KEYS).filter(k => SUPERWALL_API_KEYS[k as keyof typeof SUPERWALL_API_KEYS] !== `YOUR_${k.toUpperCase()}_API_KEY`));
+
+      return (
+        <SuperwallProvider
+          apiKeys={SUPERWALL_API_KEYS}
+          onConfigurationError={(error) => {
+            console.error('❌ Superwall configuration failed:', error);
+          }}
+        >
+          <SuperwallLoading>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" color="#4CAF50" />
+            </View>
+          </SuperwallLoading>
+          <SuperwallLoaded>
+            <AppContent />
+          </SuperwallLoaded>
+        </SuperwallProvider>
+      );
+    } catch (error) {
+      console.warn('⚠️ Superwall not available, running without subscription features:', error);
+    }
+  }
+
+  // Fallback: Run without Superwall (for Expo Go and web)
+  return <AppContent />;
 }

@@ -55,11 +55,7 @@ export default function FieldDetailsScreen() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
 
-  useEffect(() => {
-    loadFieldAndNotes();
-  }, [id]);
-
-  const loadFieldAndNotes = async () => {
+  const loadFieldAndNotes = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading field details and notes for:', id);
@@ -90,7 +86,11 @@ export default function FieldDetailsScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, token]);
+
+  useEffect(() => {
+    loadFieldAndNotes();
+  }, [loadFieldAndNotes]);
 
   const pickImage = async () => {
     console.log('User tapped upload photo');
