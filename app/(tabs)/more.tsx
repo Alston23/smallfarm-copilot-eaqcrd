@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import SubscriptionModal from '@/components/SubscriptionModal';
+import { useUser } from 'expo-superwall';
 
 interface MenuItem {
   id: string;
@@ -137,8 +138,16 @@ export default function MoreScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { subscriptionStatus, user: superwallUser } = useUser();
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedFeature, setSelectedFeature] = useState<MenuItem | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+
+  useEffect(() => {
+    console.log('📊 Subscription status updated:', subscriptionStatus?.status);
+    console.log('👤 Superwall user:', superwallUser?.appUserId);
+    setIsSubscribed(subscriptionStatus?.status === 'ACTIVE');
+  }, [subscriptionStatus, superwallUser]);
 
   const handleLogout = async () => {
     console.log('User logging out from more screen');
@@ -148,13 +157,17 @@ export default function MoreScreen() {
 
   const handleMenuItemPress = (item: MenuItem) => {
     console.log('User tapped menu item:', item.title);
+    console.log('Is subscribed:', isSubscribed);
+    console.log('Requires subscription:', item.requiresSubscription);
     
-    if (item.requiresSubscription) {
-      // Show subscription modal
+    if (item.requiresSubscription && !isSubscribed) {
+      // Show subscription modal for non-subscribers
+      console.log('🔒 Showing subscription modal for:', item.title);
       setSelectedFeature(item);
       setModalVisible(true);
     } else {
-      // Navigate to the screen
+      // Navigate to the screen (either free feature or subscribed user)
+      console.log('✅ Navigating to:', item.route);
       if (item.route) {
         router.push(item.route as any);
       }
@@ -199,53 +212,77 @@ export default function MoreScreen() {
                 📍 {user.location}
               </Text>
             )}
+            {isSubscribed && (
+              <View style={styles.premiumBadge}>
+                <IconSymbol
+                  ios_icon_name="star.fill"
+                  android_material_icon_name="star"
+                  size={14}
+                  color="#fff"
+                />
+                <Text style={styles.premiumText}>Premium Member</Text>
+              </View>
+            )}
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: colors.text }]}>Features</Text>
-          {menuItems.map((item) => (
-            <TouchableOpacity
-              key={item.id}
-              style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => handleMenuItemPress(item)}
-            >
-              <View style={styles.menuItemLeft}>
-                <View style={styles.iconWrapper}>
-                  <IconSymbol
-                    ios_icon_name={item.iosIcon}
-                    android_material_icon_name={item.icon}
-                    size={24}
-                    color={farmGreen}
-                  />
-                  {item.requiresSubscription && (
-                    <View style={styles.lockBadge}>
-                      <IconSymbol
-                        ios_icon_name="lock.fill"
-                        android_material_icon_name="lock"
-                        size={10}
-                        color="#fff"
-                      />
-                    </View>
-                  )}
+          {menuItems.map((item) => {
+            const hasAccess = !item.requiresSubscription || isSubscribed;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => handleMenuItemPress(item)}
+              >
+                <View style={styles.menuItemLeft}>
+                  <View style={styles.iconWrapper}>
+                    <IconSymbol
+                      ios_icon_name={item.iosIcon}
+                      android_material_icon_name={item.icon}
+                      size={24}
+                      color={hasAccess ? farmGreen : colors.icon}
+                    />
+                    {item.requiresSubscription && !isSubscribed && (
+                      <View style={styles.lockBadge}>
+                        <IconSymbol
+                          ios_icon_name="lock.fill"
+                          android_material_icon_name="lock"
+                          size={10}
+                          color="#fff"
+                        />
+                      </View>
+                    )}
+                    {item.requiresSubscription && isSubscribed && (
+                      <View style={styles.unlockBadge}>
+                        <IconSymbol
+                          ios_icon_name="checkmark.circle.fill"
+                          android_material_icon_name="check-circle"
+                          size={10}
+                          color="#fff"
+                        />
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.menuItemText}>
+                    <Text style={[styles.menuItemTitle, { color: colors.text }]}>
+                      {item.title}
+                    </Text>
+                    <Text style={[styles.menuItemDescription, { color: colors.icon }]}>
+                      {item.description}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.menuItemText}>
-                  <Text style={[styles.menuItemTitle, { color: colors.text }]}>
-                    {item.title}
-                  </Text>
-                  <Text style={[styles.menuItemDescription, { color: colors.icon }]}>
-                    {item.description}
-                  </Text>
-                </View>
-              </View>
-              <IconSymbol
-                ios_icon_name="chevron.right"
-                android_material_icon_name="arrow-forward"
-                size={20}
-                color={colors.icon}
-              />
-            </TouchableOpacity>
-          ))}
+                <IconSymbol
+                  ios_icon_name="chevron.right"
+                  android_material_icon_name="arrow-forward"
+                  size={20}
+                  color={colors.icon}
+                />
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -320,6 +357,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 4,
   },
+  premiumBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: farmGreen,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginTop: 8,
+  },
+  premiumText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   section: {
     marginBottom: 24,
   },
@@ -351,6 +404,17 @@ const styles = StyleSheet.create({
     top: -4,
     right: -4,
     backgroundColor: '#ef4444',
+    borderRadius: 8,
+    width: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  unlockBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    backgroundColor: farmGreen,
     borderRadius: 8,
     width: 16,
     height: 16,

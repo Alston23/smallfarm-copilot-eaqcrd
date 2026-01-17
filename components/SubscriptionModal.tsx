@@ -9,10 +9,12 @@ import {
   ScrollView,
   useColorScheme,
   Platform,
+  Alert,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { IconSymbol } from '@/components/IconSymbol';
 import { Colors, farmGreen } from '@/constants/Colors';
+import { usePlacement, useUser } from 'expo-superwall';
 
 interface SubscriptionModalProps {
   visible: boolean;
@@ -35,6 +37,49 @@ export default function SubscriptionModal({
 }: SubscriptionModalProps) {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { subscriptionStatus } = useUser();
+  
+  const { registerPlacement, state: placementState } = usePlacement({
+    onError: (err) => {
+      console.error('❌ Paywall Error:', err);
+      Alert.alert('Error', 'Unable to load subscription options. Please try again.');
+    },
+    onPresent: (info) => {
+      console.log('✅ Paywall Presented:', info);
+    },
+    onDismiss: (info, result) => {
+      console.log('📱 Paywall Dismissed:', info, 'Result:', result);
+      if (result === 'purchased' || result === 'restored') {
+        Alert.alert(
+          'Success!',
+          'You now have access to all premium features.',
+          [{ text: 'OK', onPress: onClose }]
+        );
+      }
+    },
+  });
+
+  const handleSubscribe = async () => {
+    console.log('🔐 User tapped Subscribe button for:', featureName);
+    console.log('📊 Current subscription status:', subscriptionStatus?.status);
+    
+    try {
+      await registerPlacement({
+        placement: 'premium_features',
+        feature() {
+          console.log('✅ Feature unlocked! User has access to:', featureName);
+          Alert.alert(
+            'Welcome to Premium!',
+            `You now have access to ${featureName} and all other premium features.`,
+            [{ text: 'Get Started', onPress: onClose }]
+          );
+        },
+      });
+    } catch (error) {
+      console.error('❌ Error registering placement:', error);
+      Alert.alert('Error', 'Unable to show subscription options. Please try again.');
+    }
+  };
 
   return (
     <Modal
@@ -125,15 +170,33 @@ export default function SubscriptionModal({
               ))}
             </View>
 
+            <View style={[styles.pricingCard, { backgroundColor: `${farmGreen}15`, borderColor: farmGreen }]}>
+              <Text style={[styles.pricingTitle, { color: colors.text }]}>
+                Premium Subscription
+              </Text>
+              <View style={styles.priceRow}>
+                <Text style={[styles.priceAmount, { color: farmGreen }]}>
+                  $12.99
+                </Text>
+                <Text style={[styles.pricePeriod, { color: colors.icon }]}>
+                  /month
+                </Text>
+              </View>
+              <Text style={[styles.pricingFeatures, { color: colors.icon }]}>
+                • Access to all premium features{'\n'}
+                • AI-powered insights and recommendations{'\n'}
+                • Advanced financial reports{'\n'}
+                • Marketplace access{'\n'}
+                • Weather forecasting{'\n'}
+                • Priority support
+              </Text>
+            </View>
+
             <TouchableOpacity 
               style={[styles.subscribeButton, { backgroundColor: farmGreen }]}
-              onPress={() => {
-                console.log('User tapped Subscribe button for:', featureName);
-                // TODO: Navigate to subscription/payment screen
-                onClose();
-              }}
+              onPress={handleSubscribe}
             >
-              <Text style={styles.subscribeButtonText}>Subscribe Now</Text>
+              <Text style={styles.subscribeButtonText}>Subscribe Now - $12.99/month</Text>
               <IconSymbol
                 ios_icon_name="arrow.right.circle.fill"
                 android_material_icon_name="arrow-forward"
@@ -142,17 +205,9 @@ export default function SubscriptionModal({
               />
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.learnMoreButton}
-              onPress={() => {
-                console.log('User tapped Learn More button');
-                // TODO: Navigate to pricing/features comparison screen
-              }}
-            >
-              <Text style={[styles.learnMoreText, { color: farmGreen }]}>
-                Learn More About Premium
-              </Text>
-            </TouchableOpacity>
+            <Text style={[styles.disclaimer, { color: colors.icon }]}>
+              Cancel anytime. Works on iOS, Android, and web.
+            </Text>
           </ScrollView>
         </View>
       </View>
@@ -249,7 +304,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 16,
     borderWidth: 1,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
@@ -271,6 +326,37 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
+  pricingCard: {
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 2,
+    marginBottom: 24,
+    alignItems: 'center',
+  },
+  pricingTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 16,
+  },
+  priceAmount: {
+    fontSize: 36,
+    fontWeight: 'bold',
+  },
+  pricePeriod: {
+    fontSize: 18,
+    marginLeft: 4,
+  },
+  pricingFeatures: {
+    fontSize: 14,
+    lineHeight: 22,
+    textAlign: 'left',
+    width: '100%',
+  },
   subscribeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -282,15 +368,12 @@ const styles = StyleSheet.create({
   },
   subscribeButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  learnMoreButton: {
-    padding: 12,
-    alignItems: 'center',
-  },
-  learnMoreText: {
-    fontSize: 16,
-    fontWeight: '600',
+  disclaimer: {
+    fontSize: 12,
+    textAlign: 'center',
+    marginBottom: 8,
   },
 });
