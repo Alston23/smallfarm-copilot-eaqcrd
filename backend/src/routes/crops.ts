@@ -190,23 +190,41 @@ export function registerCropRoutes(app: App): void {
     }
   );
 
-  // GET /api/crops - Get all crops (both system and user custom, requires auth for custom)
+  // GET /api/crops - Get all crops (public endpoint, includes system crops + authenticated user's custom crops)
   app.fastify.get<{}>(
     '/api/crops',
     async (request: FastifyRequest, reply: FastifyReply) => {
       app.logger.info({}, 'Fetching all crops');
 
       try {
-        const requireAuth = app.requireAuth();
+        // Get all system crops (public)
         const systemCrops = await app.db.query.crops.findMany({
           where: eq(schema.crops.isCustom, false),
         });
 
+        // Get user custom crops only if authenticated
         let userCustomCrops = [];
-        const session = await requireAuth(request, reply);
-        if (session) {
+        let sessionUserId: string | undefined;
+
+        // Try to get session if user is authenticated
+        // Check for authorization header to see if user provided credentials
+        const authHeader = request.headers.authorization;
+        if (authHeader) {
+          try {
+            const requireAuth = app.requireAuth();
+            const session = await requireAuth(request, reply);
+            if (session) {
+              sessionUserId = session.user.id;
+            }
+          } catch {
+            // User provided auth header but it's invalid - continue anyway
+          }
+        }
+
+        // If we have a valid session, get user's custom crops
+        if (sessionUserId) {
           userCustomCrops = await app.db.query.crops.findMany({
-            where: eq(schema.crops.userId, session.user.id),
+            where: eq(schema.crops.userId, sessionUserId),
           });
         }
 
