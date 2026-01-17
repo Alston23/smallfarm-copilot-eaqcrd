@@ -37,6 +37,12 @@ export default function TabLayout() {
           route: '/(tabs)/inventory',
         },
         {
+          name: 'equipment',
+          label: 'Equipment',
+          icon: 'agriculture',
+          route: '/(tabs)/equipment',
+        },
+        {
           name: 'more',
           label: 'More',
           icon: 'menu',
@@ -52,6 +58,7 @@ export default function TabLayout() {
       <Tabs.Screen name="fields" />
       <Tabs.Screen name="schedule" />
       <Tabs.Screen name="inventory" />
+      <Tabs.Screen name="equipment" />
       <Tabs.Screen name="more" />
     </Tabs>
   );
