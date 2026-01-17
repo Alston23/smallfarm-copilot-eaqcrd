@@ -14,6 +14,9 @@ import { registerUploadRoutes } from './routes/upload.js';
 import { registerAiRoutes } from './routes/ai.js';
 import { registerWeatherRoutes } from './routes/weather.js';
 import { registerEquipmentRoutes } from './routes/equipment.js';
+import { registerFieldBedNotesRoutes } from './routes/field-bed-notes.js';
+import { registerInventoryStorageRoutes } from './routes/inventory-storage.js';
+import { registerReportRoutes } from './routes/reports.js';
 
 const schema = { ...appSchema, ...authSchema };
 
@@ -42,6 +45,9 @@ registerUploadRoutes(app);
 registerAiRoutes(app);
 registerWeatherRoutes(app);
 registerEquipmentRoutes(app);
+registerFieldBedNotesRoutes(app);
+registerInventoryStorageRoutes(app);
+registerReportRoutes(app);
 
 // Seed system crops on startup
 await seedSystemCrops(app);

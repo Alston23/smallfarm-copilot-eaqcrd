@@ -128,8 +128,25 @@ export const inventory = pgTable('inventory', {
   unit: text('unit').notNull(),
   notes: text('notes'),
   reorderLevel: numeric('reorder_level', { precision: 12, scale: 2 }),
+  coldStorageCapacity: numeric('cold_storage_capacity', { precision: 12, scale: 2 }),
+  coldStorageUsed: numeric('cold_storage_used', { precision: 12, scale: 2 }),
+  dryStorageCapacity: numeric('dry_storage_capacity', { precision: 12, scale: 2 }),
+  dryStorageUsed: numeric('dry_storage_used', { precision: 12, scale: 2 }),
+  lowStockAlertSent: boolean('low_stock_alert_sent').default(false),
+  lastAlertDate: timestamp('last_alert_date'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+// ===== Field/Bed Notes =====
+export const fieldBedNotes = pgTable('field_bed_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
+  fieldBedId: uuid('field_bed_id').notNull().references(() => fieldsBeds.id, { onDelete: 'cascade' }),
+  noteType: text('note_type', { enum: ['photo', 'voice'] }).notNull(),
+  fileUrl: text('file_url').notNull(),
+  caption: text('caption'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
 // ===== Financial Tracking =====
@@ -261,6 +278,7 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 
 export const fieldBedsRelations = relations(fieldsBeds, ({ many }) => ({
   crops: many(fieldBedCrops),
+  notes: many(fieldBedNotes),
 }));
 
 export const fieldBedCropsRelations = relations(fieldBedCrops, ({ one, many }) => ({
@@ -333,3 +351,10 @@ export const harvestsRelations = relations(harvests, ({ one }) => ({
 export const weatherAlertsRelations = relations(weatherAlerts, ({}) => ({}));
 
 export const equipmentRelations = relations(equipment, ({}) => ({}));
+
+export const fieldBedNotesRelations = relations(fieldBedNotes, ({ one }) => ({
+  fieldBed: one(fieldsBeds, {
+    fields: [fieldBedNotes.fieldBedId],
+    references: [fieldsBeds.id],
+  }),
+}));
