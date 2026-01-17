@@ -87,6 +87,20 @@ export const schedules = pgTable('schedules', {
   completed: boolean('completed').default(false),
   completedDate: timestamp('completed_date'),
   notes: text('notes'),
+  weatherRecommendation: text('weather_recommendation'),
+  weatherPriority: text('weather_priority', { enum: ['low', 'medium', 'high'] }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
+// ===== Weather =====
+export const weatherAlerts = pgTable('weather_alerts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
+  location: text('location').notNull(),
+  alertType: text('alert_type').notNull(),
+  severity: text('severity', { enum: ['low', 'medium', 'high'] }).notNull(),
+  description: text('description').notNull(),
+  forecastDate: timestamp('forecast_date').notNull(),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
@@ -299,3 +313,5 @@ export const harvestsRelations = relations(harvests, ({ one }) => ({
     references: [crops.id],
   }),
 }));
+
+export const weatherAlertsRelations = relations(weatherAlerts, ({}) => ({}));

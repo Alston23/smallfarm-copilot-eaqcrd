@@ -12,6 +12,7 @@ import { registerConsumerMarketplaceRoutes } from './routes/marketplace-consumer
 import { registerEquipmentMarketplaceRoutes } from './routes/marketplace-equipment.js';
 import { registerUploadRoutes } from './routes/upload.js';
 import { registerAiRoutes } from './routes/ai.js';
+import { registerWeatherRoutes } from './routes/weather.js';
 
 const schema = { ...appSchema, ...authSchema };
 
@@ -38,6 +39,7 @@ registerConsumerMarketplaceRoutes(app);
 registerEquipmentMarketplaceRoutes(app);
 registerUploadRoutes(app);
 registerAiRoutes(app);
+registerWeatherRoutes(app);
 
 // Seed system crops on startup
 await seedSystemCrops(app);
