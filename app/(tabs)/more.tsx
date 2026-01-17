@@ -7,7 +7,6 @@ import {
   ScrollView,
   TouchableOpacity,
   useColorScheme,
-  Alert,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +16,14 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 
 const menuItems = [
+  {
+    id: 'weather',
+    title: 'Weather Insights',
+    description: 'AI-powered weather forecasts and farming recommendations',
+    icon: 'cloud',
+    iosIcon: 'cloud.sun.fill',
+    route: '/weather-insights',
+  },
   {
     id: 'financial',
     title: 'Financial Reports',
@@ -57,32 +64,32 @@ export default function MoreScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('User logging out');
-            await signOut();
-            router.replace('/auth/login');
-          },
-        },
-      ]
-    );
+  const handleLogout = async () => {
+    console.log('User logging out from more screen');
+    await signOut();
+    router.replace('/auth/login');
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, Platform.OS === 'android' && { paddingTop: 48 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>More</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
-          Additional features and settings
-        </Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>More</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>
+            Additional features and settings
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.right.square.fill"
+            android_material_icon_name="logout"
+            size={24}
+            color="#ef4444"
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -140,26 +147,6 @@ export default function MoreScreen() {
             </TouchableOpacity>
           ))}
         </View>
-
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Account</Text>
-          <TouchableOpacity
-            style={[styles.menuItem, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={handleLogout}
-          >
-            <View style={styles.menuItemLeft}>
-              <IconSymbol
-                ios_icon_name="arrow.right.square.fill"
-                android_material_icon_name="logout"
-                size={24}
-                color="#ef4444"
-              />
-              <Text style={[styles.menuItemTitle, { color: '#ef4444' }]}>
-                Logout
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -173,6 +160,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 32,
@@ -181,6 +171,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+  },
+  logoutButton: {
+    padding: 8,
   },
   content: {
     flex: 1,

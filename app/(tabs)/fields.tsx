@@ -22,28 +22,24 @@ const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost
 interface FieldBed {
   id: string;
   name: string;
-  type: string;
-  size_value: number;
-  size_unit: string;
+  type: 'field' | 'bed';
+  square_footage?: number;
+  acreage?: number;
   irrigation_type?: string;
   soil_type?: string;
-  crop?: {
-    id: string;
-    name: string;
-  };
-  planting_date?: string;
+  created_at: string;
 }
 
 export default function FieldsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, signOut } = useAuth();
   
-  const [fieldsBeds, setFieldsBeds] = useState<FieldBed[]>([]);
+  const [fields, setFields] = useState<FieldBed[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadFieldsBeds = useCallback(async () => {
+  const loadFields = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading fields and beds');
@@ -56,26 +52,45 @@ export default function FieldsScreen() {
       if (response.ok) {
         const data = await response.json();
         console.log(`Loaded ${data.length} fields/beds`);
-        setFieldsBeds(data);
+        setFields(data);
       }
     } catch (error) {
-      console.error('Error loading fields/beds:', error);
+      console.error('Error loading fields:', error);
     } finally {
       setLoading(false);
     }
   }, [token]);
 
   useEffect(() => {
-    loadFieldsBeds();
-  }, [loadFieldsBeds]);
+    loadFields();
+  }, [loadFields]);
+
+  const handleLogout = async () => {
+    console.log('User logging out from fields screen');
+    await signOut();
+    router.replace('/auth/login');
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, Platform.OS === 'android' && { paddingTop: 48 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Fields & Beds</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
-          Manage your growing spaces
-        </Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Fields & Beds</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>
+            Manage your growing areas
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.right.square.fill"
+            android_material_icon_name="logout"
+            size={24}
+            color="#ef4444"
+          />
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
@@ -83,10 +98,10 @@ export default function FieldsScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={farmGreen} />
           </View>
-        ) : fieldsBeds.length === 0 ? (
+        ) : fields.length === 0 ? (
           <View style={styles.emptyContainer}>
             <IconSymbol
-              ios_icon_name="square.grid.2x2"
+              ios_icon_name="grid.fill"
               android_material_icon_name="grid-on"
               size={64}
               color={colors.icon}
@@ -95,50 +110,54 @@ export default function FieldsScreen() {
               No fields or beds yet
             </Text>
             <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-              Add your first growing space to get started
+              Add your first growing area to get started
             </Text>
           </View>
         ) : (
           <>
-            {fieldsBeds.map((item) => (
+            {fields.map((field) => (
               <View
-                key={item.id}
+                key={field.id}
                 style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
               >
                 <View style={styles.cardHeader}>
                   <IconSymbol
-                    ios_icon_name={item.type === 'field' ? 'square.grid.2x2' : 'square.fill'}
-                    android_material_icon_name={item.type === 'field' ? 'grid-on' : 'crop-square'}
-                    size={32}
+                    ios_icon_name={field.type === 'field' ? 'grid.fill' : 'square.grid.2x2.fill'}
+                    android_material_icon_name={field.type === 'field' ? 'grid-on' : 'grid-view'}
+                    size={24}
                     color={farmGreen}
                   />
-                  <View style={styles.cardInfo}>
-                    <Text style={[styles.cardName, { color: colors.text }]}>{item.name}</Text>
-                    <Text style={[styles.cardType, { color: colors.icon }]}>
-                      {item.type.charAt(0).toUpperCase() + item.type.slice(1)} • {item.size_value} {item.size_unit}
+                  <Text style={[styles.fieldName, { color: colors.text }]}>
+                    {field.name}
+                  </Text>
+                  <View style={[styles.typeBadge, { backgroundColor: farmGreen }]}>
+                    <Text style={styles.typeBadgeText}>
+                      {field.type.toUpperCase()}
                     </Text>
-                    {(item.irrigation_type || item.soil_type) && (
-                      <View style={styles.detailsRow}>
-                        {item.irrigation_type && (
-                          <Text style={[styles.detailText, { color: colors.icon }]}>
-                            💧 {item.irrigation_type.charAt(0).toUpperCase() + item.irrigation_type.slice(1)}
-                          </Text>
-                        )}
-                        {item.soil_type && (
-                          <Text style={[styles.detailText, { color: colors.icon }]}>
-                            🌱 {item.soil_type.charAt(0).toUpperCase() + item.soil_type.slice(1)}
-                          </Text>
-                        )}
-                      </View>
-                    )}
                   </View>
                 </View>
-                {item.crop && (
-                  <View style={[styles.cropInfo, { backgroundColor: colors.background }]}>
-                    <Text style={[styles.cropLabel, { color: colors.icon }]}>Growing:</Text>
-                    <Text style={[styles.cropName, { color: colors.text }]}>{item.crop.name}</Text>
-                  </View>
-                )}
+                <View style={styles.cardDetails}>
+                  {field.acreage && (
+                    <Text style={[styles.detailText, { color: colors.icon }]}>
+                      📏 {field.acreage} acres
+                    </Text>
+                  )}
+                  {field.square_footage && (
+                    <Text style={[styles.detailText, { color: colors.icon }]}>
+                      📏 {field.square_footage} sq ft
+                    </Text>
+                  )}
+                  {field.irrigation_type && (
+                    <Text style={[styles.detailText, { color: colors.icon }]}>
+                      💧 {field.irrigation_type}
+                    </Text>
+                  )}
+                  {field.soil_type && (
+                    <Text style={[styles.detailText, { color: colors.icon }]}>
+                      🌱 {field.soil_type}
+                    </Text>
+                  )}
+                </View>
               </View>
             ))}
           </>
@@ -172,6 +191,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 32,
@@ -180,6 +202,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+  },
+  logoutButton: {
+    padding: 8,
   },
   content: {
     flex: 1,
@@ -198,8 +223,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
     marginTop: 16,
+    fontWeight: '600',
   },
   emptySubtext: {
     fontSize: 14,
@@ -214,41 +239,29 @@ const styles = StyleSheet.create({
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
+    marginBottom: 12,
   },
-  cardInfo: {
+  fieldName: {
     flex: 1,
-  },
-  cardName: {
     fontSize: 18,
     fontWeight: '600',
   },
-  cardType: {
-    fontSize: 14,
-    marginTop: 4,
+  typeBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  detailsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginTop: 8,
+  typeBadgeText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
-  detailText: {
-    fontSize: 13,
-  },
-  cropInfo: {
-    flexDirection: 'row',
-    marginTop: 12,
-    padding: 12,
-    borderRadius: 8,
+  cardDetails: {
     gap: 8,
   },
-  cropLabel: {
+  detailText: {
     fontSize: 14,
-  },
-  cropName: {
-    fontSize: 14,
-    fontWeight: '600',
   },
   addButton: {
     flexDirection: 'row',

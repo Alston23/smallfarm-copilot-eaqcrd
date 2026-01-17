@@ -22,7 +22,7 @@ const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost
 
 const categories = [
   { id: 'vegetables', label: 'Vegetables', icon: 'eco', iosIcon: 'leaf.fill' },
-  { id: 'fruits', label: 'Fruits', icon: 'apple', iosIcon: 'apple.logo' },
+  { id: 'fruits', label: 'Fruits', icon: 'local-florist', iosIcon: 'apple.logo' },
   { id: 'herbs', label: 'Herbs', icon: 'spa', iosIcon: 'sparkles' },
   { id: 'flowers', label: 'Flowers', icon: 'local-florist', iosIcon: 'flower.fill' },
 ];
@@ -39,7 +39,7 @@ export default function CropsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, signOut } = useAuth();
   
   const [selectedCategory, setSelectedCategory] = useState('vegetables');
   const [searchQuery, setSearchQuery] = useState('');
@@ -94,13 +94,32 @@ export default function CropsScreen() {
     loadCrops();
   }, [loadCrops]);
 
+  const handleLogout = async () => {
+    console.log('User logging out from crops screen');
+    await signOut();
+    router.replace('/auth/login');
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, Platform.OS === 'android' && { paddingTop: 48 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Crop Library</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
-          Browse and learn about different crops
-        </Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Crop Library</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>
+            Browse and learn about different crops
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.right.square.fill"
+            android_material_icon_name="logout"
+            size={24}
+            color="#ef4444"
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.searchContainer}>
@@ -277,6 +296,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 32,
@@ -285,6 +307,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+  },
+  logoutButton: {
+    padding: 8,
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -309,6 +334,7 @@ const styles = StyleSheet.create({
   categoriesContent: {
     paddingHorizontal: 20,
     gap: 12,
+    paddingRight: 40,
   },
   categoryButton: {
     flexDirection: 'row',

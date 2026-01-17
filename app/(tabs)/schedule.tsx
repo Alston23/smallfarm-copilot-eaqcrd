@@ -11,6 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,12 +28,15 @@ interface Schedule {
   task_description: string;
   due_date: string;
   completed: boolean;
+  weather_recommendation?: string;
+  weather_priority?: string;
 }
 
 export default function ScheduleScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { token } = useAuth();
+  const router = useRouter();
+  const { token, signOut } = useAuth();
   
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,21 +45,43 @@ export default function ScheduleScreen() {
   const loadSchedules = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('Loading schedules, filter:', filter);
-      const url = filter === 'all' 
-        ? `${BACKEND_URL}/api/schedules`
-        : `${BACKEND_URL}/api/schedules?completed=${filter === 'completed'}`;
+      console.log('Loading schedules with weather data, filter:', filter);
       
-      const response = await fetch(url, {
+      // Try to load schedules with weather recommendations first
+      let url = `${BACKEND_URL}/api/schedules/with-weather`;
+      let response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
+      // Fallback to regular schedules endpoint if with-weather doesn't exist yet
+      if (!response.ok) {
+        console.log('Falling back to regular schedules endpoint');
+        url = filter === 'all' 
+          ? `${BACKEND_URL}/api/schedules`
+          : `${BACKEND_URL}/api/schedules?completed=${filter === 'completed'}`;
+        
+        response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+      }
+
       if (response.ok) {
         const data = await response.json();
         console.log(`Loaded ${data.length} schedules`);
-        setSchedules(data);
+        
+        // Filter on frontend if needed
+        let filteredData = data;
+        if (filter !== 'all') {
+          filteredData = data.filter((s: Schedule) => 
+            filter === 'completed' ? s.completed : !s.completed
+          );
+        }
+        
+        setSchedules(filteredData);
       }
     } catch (error) {
       console.error('Error loading schedules:', error);
@@ -88,13 +114,46 @@ export default function ScheduleScreen() {
     }
   };
 
+  const handleLogout = async () => {
+    console.log('User logging out from schedule screen');
+    await signOut();
+    router.replace('/auth/login');
+  };
+
+  const getPriorityColor = (priority?: string) => {
+    if (!priority) return colors.icon;
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return '#ef4444';
+      case 'medium':
+        return '#f59e0b';
+      case 'low':
+        return '#10b981';
+      default:
+        return colors.icon;
+    }
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={[styles.header, Platform.OS === 'android' && { paddingTop: 48 }]}>
-        <Text style={[styles.title, { color: colors.text }]}>Schedule</Text>
-        <Text style={[styles.subtitle, { color: colors.icon }]}>
-          Your farming tasks and reminders
-        </Text>
+        <View>
+          <Text style={[styles.title, { color: colors.text }]}>Schedule</Text>
+          <Text style={[styles.subtitle, { color: colors.icon }]}>
+            Your farming tasks and reminders
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={handleLogout}
+        >
+          <IconSymbol
+            ios_icon_name="arrow.right.square.fill"
+            android_material_icon_name="logout"
+            size={24}
+            color="#ef4444"
+          />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.filterContainer}>
@@ -179,6 +238,34 @@ export default function ScheduleScreen() {
                   <Text style={[styles.taskDescription, { color: colors.icon }]}>
                     {schedule.task_description}
                   </Text>
+                  
+                  {schedule.weather_recommendation && (
+                    <View
+                      style={[
+                        styles.weatherAlert,
+                        {
+                          backgroundColor: `${getPriorityColor(schedule.weather_priority)}15`,
+                          borderColor: getPriorityColor(schedule.weather_priority),
+                        },
+                      ]}
+                    >
+                      <IconSymbol
+                        ios_icon_name="cloud.sun.fill"
+                        android_material_icon_name="cloud"
+                        size={16}
+                        color={getPriorityColor(schedule.weather_priority)}
+                      />
+                      <Text
+                        style={[
+                          styles.weatherText,
+                          { color: getPriorityColor(schedule.weather_priority) },
+                        ]}
+                      >
+                        {schedule.weather_recommendation}
+                      </Text>
+                    </View>
+                  )}
+                  
                   <View style={styles.taskMeta}>
                     <Text style={[styles.fieldName, { color: colors.icon }]}>
                       {schedule.field_bed.name}
@@ -205,6 +292,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 16,
     paddingBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 32,
@@ -213,6 +303,9 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 16,
     marginTop: 4,
+  },
+  logoutButton: {
+    padding: 8,
   },
   filterContainer: {
     flexDirection: 'row',
@@ -280,6 +373,21 @@ const styles = StyleSheet.create({
   taskDescription: {
     fontSize: 14,
     marginBottom: 8,
+  },
+  weatherAlert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 8,
+  },
+  weatherText: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '500',
+    lineHeight: 18,
   },
   taskMeta: {
     flexDirection: 'row',
