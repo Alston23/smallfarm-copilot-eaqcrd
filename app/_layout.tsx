@@ -8,12 +8,13 @@ import { SystemBars } from "react-native-edge-to-edge";
 import {
   DarkTheme,
   DefaultTheme,
-  ThemeProvider,
+  ThemeProvider as NavigationThemeProvider,
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Constants from "expo-constants";
 
 SplashScreen.preventAutoHideAsync();
@@ -39,21 +40,23 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-        <AuthProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="auth/login" />
-            <Stack.Screen name="auth/register" />
-            <Stack.Screen name="auth/forgot-password" />
-            <Stack.Screen name="auth-popup" />
-            <Stack.Screen name="auth-callback" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="(tabs)" />
-          </Stack>
-        </AuthProvider>
+      <ThemeProvider>
+        <NavigationThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+          <SystemBars style={colorScheme === "dark" ? "light" : "dark"} />
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <AuthProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="auth/login" />
+              <Stack.Screen name="auth/register" />
+              <Stack.Screen name="auth/forgot-password" />
+              <Stack.Screen name="auth-popup" />
+              <Stack.Screen name="auth-callback" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="(tabs)" />
+            </Stack>
+          </AuthProvider>
+        </NavigationThemeProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

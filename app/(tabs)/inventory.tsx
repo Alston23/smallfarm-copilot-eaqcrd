@@ -51,6 +51,10 @@ export default function InventoryScreen() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [alerts, setAlerts] = useState<{
+    lowStockItems: InventoryItem[];
+    storageAlerts: Array<{ type: string; percentage: number; message: string }>;
+  }>({ lowStockItems: [], storageAlerts: [] });
 
   const loadInventory = useCallback(async () => {
     setLoading(true);
@@ -66,6 +70,19 @@ export default function InventoryScreen() {
         const data = await response.json();
         console.log(`Loaded ${data.length} inventory items`);
         setInventory(data);
+      }
+
+      // Load inventory alerts (low stock items and storage warnings)
+      const alertsResponse = await fetch(`${BACKEND_URL}/api/inventory/alerts`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (alertsResponse.ok) {
+        const alertsData = await alertsResponse.json();
+        console.log('Loaded inventory alerts:', alertsData);
+        setAlerts(alertsData);
       }
     } catch (error) {
       console.error('Error loading inventory:', error);
@@ -161,6 +178,46 @@ export default function InventoryScreen() {
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        {/* Storage Management Button */}
+        <TouchableOpacity
+          style={[styles.storageButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+          onPress={() => {
+            console.log('User tapped Storage Management');
+            router.push('/storage-management');
+          }}
+        >
+          <IconSymbol ios_icon_name="cube.box.fill" android_material_icon_name="inventory" size={24} color={farmGreen} />
+          <View style={styles.storageButtonContent}>
+            <Text style={[styles.storageButtonTitle, { color: colors.text }]}>Storage Management</Text>
+            <Text style={[styles.storageButtonSubtitle, { color: colors.icon }]}>
+              Track cold & dry storage capacity
+            </Text>
+          </View>
+          <IconSymbol ios_icon_name="chevron.right" android_material_icon_name="chevron-right" size={20} color={colors.icon} />
+        </TouchableOpacity>
+
+        {/* Alerts Section */}
+        {(alerts.lowStockItems.length > 0 || alerts.storageAlerts.length > 0) && (
+          <View style={[styles.alertsCard, { backgroundColor: '#fef3c7', borderColor: '#f59e0b' }]}>
+            <View style={styles.alertsHeader}>
+              <IconSymbol ios_icon_name="exclamationmark.triangle.fill" android_material_icon_name="warning" size={24} color="#f59e0b" />
+              <Text style={[styles.alertsTitle, { color: '#92400e' }]}>Alerts</Text>
+            </View>
+            
+            {alerts.storageAlerts.map((alert, index) => (
+              <Text key={`storage-${index}`} style={[styles.alertText, { color: '#92400e' }]}>
+                • {alert.message}
+              </Text>
+            ))}
+            
+            {alerts.lowStockItems.map((item) => (
+              <Text key={`stock-${item.id}`} style={[styles.alertText, { color: '#92400e' }]}>
+                • {item.name} is low (only {item.quantity} {item.unit} remaining)
+              </Text>
+            ))}
+          </View>
+        )}
+
         {loading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={farmGreen} />
@@ -452,5 +509,46 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  storageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 12,
+  },
+  storageButtonContent: {
+    flex: 1,
+  },
+  storageButtonTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  storageButtonSubtitle: {
+    fontSize: 14,
+  },
+  alertsCard: {
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 2,
+    marginBottom: 16,
+  },
+  alertsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  alertsTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  alertText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 4,
   },
 });

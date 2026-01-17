@@ -1,17 +1,20 @@
 
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, View } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import FloatingTabBar from '@/components/FloatingTabBar';
+import { OfflineIndicator } from '@/components/OfflineIndicator';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
 
   return (
-    <Tabs
-      tabBar={(props) => <FloatingTabBar {...props} tabs={[
+    <>
+      <OfflineIndicator />
+      <Tabs
+        tabBar={(props) => <FloatingTabBar {...props} tabs={[
         {
           name: '(crops)',
           label: 'Crops',
@@ -60,6 +63,7 @@ export default function TabLayout() {
       <Tabs.Screen name="inventory" />
       <Tabs.Screen name="equipment" />
       <Tabs.Screen name="more" />
-    </Tabs>
+      </Tabs>
+    </>
   );
 }

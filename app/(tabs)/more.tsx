@@ -17,6 +17,14 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const menuItems = [
   {
+    id: 'settings',
+    title: 'Settings',
+    description: 'App preferences and dark mode',
+    icon: 'settings',
+    iosIcon: 'gear',
+    route: '/settings',
+  },
+  {
     id: 'weather',
     title: 'Weather Insights',
     description: 'AI-powered weather forecasts and farming recommendations',

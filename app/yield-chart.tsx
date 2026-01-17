@@ -9,6 +9,7 @@ import {
   useColorScheme,
   ActivityIndicator,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -16,6 +17,8 @@ import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
@@ -47,6 +50,7 @@ export default function YieldChartScreen() {
   const [loading, setLoading] = useState(true);
   const [yieldData, setYieldData] = useState<YieldData[]>([]);
   const [expandedCrop, setExpandedCrop] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const loadYieldData = useCallback(async () => {
     console.log('Loading yield data by crop');
@@ -84,6 +88,66 @@ export default function YieldChartScreen() {
   const maxHarvest = Math.max(...yieldData.map(d => d.totalHarvest), 1);
   const maxYield = Math.max(...yieldData.map(d => d.averageYield), 1);
 
+  const exportReport = async (format: 'csv' | 'pdf') => {
+    console.log(`User exporting harvest report as ${format}`);
+    setExporting(true);
+    
+    try {
+      // TODO: Backend Integration - POST /api/reports/export
+      const response = await fetch(`${BACKEND_URL}/api/reports/export`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportType: 'harvest',
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const { downloadUrl, filename } = await response.json();
+      console.log('Report generated:', filename);
+
+      // Download and share the file
+      const fileUri = FileSystem.documentDirectory + filename;
+      const downloadResult = await FileSystem.downloadAsync(downloadUrl, fileUri);
+
+      if (downloadResult.status === 200) {
+        console.log('Report downloaded to:', downloadResult.uri);
+        
+        // Share the file
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(downloadResult.uri);
+        } else {
+          Alert.alert('Success', `Report saved to ${downloadResult.uri}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      Alert.alert('Error', 'Failed to export report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExport = () => {
+    Alert.alert(
+      'Export Harvest Report',
+      'Choose export format',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Export as CSV', onPress: () => exportReport('csv') },
+        { text: 'Export as PDF', onPress: () => exportReport('pdf') },
+      ]
+    );
+  };
+
   return (
     <>
       <Stack.Screen
@@ -91,6 +155,20 @@ export default function YieldChartScreen() {
           headerShown: true,
           title: 'Yield per Crop',
           headerBackTitle: 'Back',
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={handleExport}
+              disabled={exporting || yieldData.length === 0}
+              style={{ marginRight: 16 }}
+            >
+              <IconSymbol
+                ios_icon_name="square.and.arrow.up"
+                android_material_icon_name="share"
+                size={24}
+                color={exporting || yieldData.length === 0 ? '#999' : farmGreen}
+              />
+            </TouchableOpacity>
+          ),
         }}
       />
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>

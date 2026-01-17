@@ -116,9 +116,14 @@ export default function FieldsScreen() {
         ) : (
           <>
             {fields.map((field) => (
-              <View
+              <TouchableOpacity
                 key={field.id}
                 style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => {
+                  console.log('User tapped field:', field.name);
+                  router.push(`/field-details/${field.id}`);
+                }}
+                activeOpacity={0.7}
               >
                 <View style={styles.cardHeader}>
                   <IconSymbol
@@ -158,7 +163,10 @@ export default function FieldsScreen() {
                     </Text>
                   )}
                 </View>
-              </View>
+                <View style={styles.cardFooter}>
+                  <IconSymbol ios_icon_name="chevron.right" android_material_icon_name="chevron-right" size={20} color={colors.icon} />
+                </View>
+              </TouchableOpacity>
             ))}
           </>
         )}
@@ -262,6 +270,10 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
+  },
+  cardFooter: {
+    alignItems: 'flex-end',
+    marginTop: 8,
   },
   addButton: {
     flexDirection: 'row',

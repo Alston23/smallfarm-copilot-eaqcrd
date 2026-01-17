@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,20 @@ import {
   ScrollView,
   TouchableOpacity,
   useColorScheme,
+  Alert,
+  ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
 import { Colors, farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
+import { useAuth } from '@/contexts/AuthContext';
+import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
+
+const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
 interface ReportItem {
   id: string;
@@ -274,6 +283,8 @@ export default function FinancialReportsScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
+  const { token } = useAuth();
+  const [exporting, setExporting] = useState(false);
 
   // Group reports by category
   const categories = Array.from(new Set(FINANCIAL_REPORTS.map(r => r.category)));
@@ -287,8 +298,75 @@ export default function FinancialReportsScreen() {
       return;
     }
     
-    // TODO: Backend Integration - Implement individual report generation endpoints
-    // For now, just log the selection
+    // Show export options
+    Alert.alert(
+      report.title,
+      'Export this report',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Export as CSV', onPress: () => exportReport(report.id, 'csv') },
+        { text: 'Export as PDF', onPress: () => exportReport(report.id, 'pdf') },
+      ]
+    );
+  };
+
+  const exportReport = async (reportType: string, format: 'csv' | 'pdf') => {
+    console.log(`User exporting ${reportType} as ${format}`);
+    setExporting(true);
+    
+    try {
+      // Map report IDs to backend report types
+      const reportTypeMap: { [key: string]: string } = {
+        'yield-per-crop': 'harvest',
+        'expense-summary': 'financial-transactions',
+        'income-summary': 'financial-transactions',
+        'profit-loss': 'financial-transactions',
+        'equipment-costs': 'equipment',
+      };
+
+      const backendReportType = reportTypeMap[reportType] || 'inventory';
+
+      // Generate and export the report
+      const response = await fetch(`${BACKEND_URL}/api/reports/export`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          reportType: backendReportType,
+          format,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate report');
+      }
+
+      const { downloadUrl, filename } = await response.json();
+      console.log('Report generated:', filename);
+
+      // Download and share the file
+      const fileUri = FileSystem.documentDirectory + filename;
+      const downloadResult = await FileSystem.downloadAsync(downloadUrl, fileUri);
+
+      if (downloadResult.status === 200) {
+        console.log('Report downloaded to:', downloadResult.uri);
+        
+        // Share the file
+        const canShare = await Sharing.isAvailableAsync();
+        if (canShare) {
+          await Sharing.shareAsync(downloadResult.uri);
+        } else {
+          Alert.alert('Success', `Report saved to ${downloadResult.uri}`);
+        }
+      }
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      Alert.alert('Error', 'Failed to export report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -310,6 +388,15 @@ export default function FinancialReportsScreen() {
               Select a report to view detailed financial insights
             </Text>
           </View>
+
+          {exporting && (
+            <View style={[styles.exportingBanner, { backgroundColor: colors.card }]}>
+              <ActivityIndicator size="small" color={farmGreen} />
+              <Text style={[styles.exportingText, { color: colors.text }]}>
+                Generating report...
+              </Text>
+            </View>
+          )}
 
           {categories.map((category, categoryIndex) => (
             <View key={categoryIndex} style={styles.categorySection}>
@@ -433,5 +520,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  exportingBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    gap: 12,
+  },
+  exportingText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
