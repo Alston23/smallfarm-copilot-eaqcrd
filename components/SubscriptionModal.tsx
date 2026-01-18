@@ -65,7 +65,7 @@ export default function SubscriptionModal({
       // Show message for Expo Go users
       Alert.alert(
         'Subscription Not Available',
-        'Subscriptions are only available in the production app. This is a development preview.\n\nIn the full app, you would be able to subscribe for $12.99/month to unlock all premium features.',
+        'Subscriptions are only available in the production app. This is a development preview.\n\nIn the full app, you would be able to subscribe to unlock all premium features.',
         [{ text: 'OK' }]
       );
       return;
@@ -159,19 +159,6 @@ export default function SubscriptionModal({
                   </Text>
                 </View>
               ))}
-            </View>
-
-            {/* Pricing */}
-            <View style={[styles.pricingCard, { backgroundColor: farmGreen + '10' }]}>
-              <Text style={[styles.priceAmount, { color: farmGreen }]}>
-                $12.99
-              </Text>
-              <Text style={[styles.priceInterval, { color: colors.text }]}>
-                per month
-              </Text>
-              <Text style={[styles.priceDescription, { color: colors.text }]}>
-                Cancel anytime • Full access to all features
-              </Text>
             </View>
 
             {/* Subscribe button */}
@@ -281,27 +268,6 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
     lineHeight: 20,
-  },
-  pricingCard: {
-    padding: 20,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  priceAmount: {
-    fontSize: 36,
-    fontWeight: 'bold',
-  },
-  priceInterval: {
-    fontSize: 16,
-    marginTop: 4,
-    opacity: 0.8,
-  },
-  priceDescription: {
-    fontSize: 13,
-    marginTop: 8,
-    opacity: 0.6,
-    textAlign: 'center',
   },
   subscribeButton: {
     padding: 16,
