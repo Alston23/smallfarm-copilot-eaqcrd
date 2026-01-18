@@ -25,6 +25,9 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Timeout for auth operations to prevent indefinite hanging
+const AUTH_TIMEOUT_MS = 5000; // 5 seconds
+
 function openOAuthPopup(provider: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const popupUrl = `${window.location.origin}/auth-popup?provider=${provider}`;
@@ -74,11 +77,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
+    console.log("🔐 AuthContext: Starting user fetch with timeout protection");
+    
     try {
       setLoading(true);
-      const session = await authClient.getSession();
+      
+      // Create a timeout promise that rejects after AUTH_TIMEOUT_MS
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Auth check timed out"));
+        }, AUTH_TIMEOUT_MS);
+      });
+
+      // Race between the actual auth check and the timeout
+      const session = await Promise.race([
+        authClient.getSession(),
+        timeoutPromise
+      ]);
+
       if (session?.data?.user) {
+        console.log("✅ AuthContext: User session found:", session.data.user.email);
         setUser(session.data.user as User);
+        
         // Get token from storage
         if (Platform.OS === "web") {
           const storedToken = localStorage.getItem(BEARER_TOKEN_KEY);
@@ -88,34 +108,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(storedToken?.token || null);
         }
       } else {
+        console.log("ℹ️ AuthContext: No user session found");
         setUser(null);
         setToken(null);
       }
     } catch (error) {
-      console.error("Failed to fetch user:", error);
+      console.error("⚠️ AuthContext: Failed to fetch user (defaulting to signed out):", error);
       setUser(null);
       setToken(null);
     } finally {
       setLoading(false);
+      console.log("🏁 AuthContext: User fetch complete");
     }
   }, []);
 
   useEffect(() => {
+    console.log("🚀 AuthContext: Initial mount, fetching user");
     fetchUser();
   }, [fetchUser]);
 
   const signInWithEmail = async (email: string, password: string) => {
     try {
+      console.log("📧 Signing in with email:", email);
       await authClient.signIn.email({ email, password });
       await fetchUser();
     } catch (error) {
-      console.error("Email sign in failed:", error);
+      console.error("❌ Email sign in failed:", error);
       throw error;
     }
   };
 
   const signUpWithEmail = async (email: string, password: string, name?: string) => {
     try {
+      console.log("📝 Signing up with email:", email);
       await authClient.signUp.email({
         email,
         password,
@@ -123,13 +148,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       await fetchUser();
     } catch (error) {
-      console.error("Email sign up failed:", error);
+      console.error("❌ Email sign up failed:", error);
       throw error;
     }
   };
 
   const signInWithSocial = async (provider: "google" | "apple" | "github") => {
     try {
+      console.log(`🔗 Signing in with ${provider}`);
       if (Platform.OS === "web") {
         const token = await openOAuthPopup(provider);
         storeWebBearerToken(token);
@@ -142,7 +168,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await fetchUser();
       }
     } catch (error) {
-      console.error(`${provider} sign in failed:`, error);
+      console.error(`❌ ${provider} sign in failed:`, error);
       throw error;
     }
   };
@@ -153,11 +179,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log("👋 Signing out");
       await authClient.signOut();
       setUser(null);
       setToken(null);
     } catch (error) {
-      console.error("Sign out failed:", error);
+      console.error("❌ Sign out failed:", error);
       throw error;
     }
   };
