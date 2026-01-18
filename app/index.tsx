@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,59 +7,112 @@ import { farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 import * as SecureStore from 'expo-secure-store';
 
-// Maximum time to wait before forcing navigation (prevents indefinite hanging)
-const STARTUP_TIMEOUT_MS = 3000; // 3 seconds
+// CRITICAL: Hard timeout to prevent indefinite hanging on splash screen
+const STARTUP_TIMEOUT_MS = 2500; // 2.5 seconds - MUST navigate by this time
 
 export default function Index() {
   const { user, loading } = useAuth();
-  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
-  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
-  const [forceNavigation, setForceNavigation] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [destination, setDestination] = useState<string | null>(null);
+  const hasNavigated = useRef(false);
 
-  // Safety timeout: Force navigation after STARTUP_TIMEOUT_MS to prevent hanging
   useEffect(() => {
-    console.log("⏱️ Index: Starting startup timeout protection");
+    console.log("🚀 Index: App startup initiated");
     
-    const timeoutId = setTimeout(() => {
-      console.warn("⚠️ Index: Startup timeout reached! Forcing navigation to prevent hanging.");
-      setForceNavigation(true);
-      setCheckingOnboarding(false);
+    // CRITICAL TIMEOUT: Force navigation after STARTUP_TIMEOUT_MS no matter what
+    const forceNavigationTimeout = setTimeout(() => {
+      if (!hasNavigated.current) {
+        console.warn("⚠️ TIMEOUT: Forcing navigation after", STARTUP_TIMEOUT_MS, "ms");
+        
+        // If we have a user by timeout, go to main app
+        // Otherwise, go to login
+        const fallbackDestination = user ? "/(tabs)/(crops)" : "/auth/login";
+        console.log("🚨 TIMEOUT: Navigating to", fallbackDestination);
+        
+        setDestination(fallbackDestination);
+        setIsReady(true);
+        hasNavigated.current = true;
+      }
     }, STARTUP_TIMEOUT_MS);
 
-    return () => {
-      console.log("🧹 Index: Cleaning up startup timeout");
-      clearTimeout(timeoutId);
-    };
-  }, []);
-
-  // Check onboarding status when auth loading completes
-  useEffect(() => {
-    async function checkOnboarding() {
-      console.log("🔍 Index: Checking onboarding status", { loading, user: user?.email });
-      
-      if (!loading) {
-        if (user) {
-          try {
-            const onboardingCompleted = await SecureStore.getItemAsync('onboarding_completed');
-            console.log("📋 Index: Onboarding status:", onboardingCompleted === 'true' ? 'completed' : 'not completed');
-            setShouldShowOnboarding(onboardingCompleted !== 'true');
-          } catch (error) {
-            console.error("⚠️ Index: Error checking onboarding status (defaulting to completed):", error);
-            setShouldShowOnboarding(false);
-          }
-        } else {
-          console.log("ℹ️ Index: No user, skipping onboarding check");
+    // Async function to check auth and onboarding
+    async function determineDestination() {
+      try {
+        console.log("🔍 Index: Checking auth state...", { loading, hasUser: !!user });
+        
+        // Wait for auth to finish loading (with timeout protection from AuthContext)
+        if (loading) {
+          console.log("⏳ Index: Waiting for auth to complete...");
+          return; // Will be called again when loading changes
         }
-        setCheckingOnboarding(false);
+
+        // No user = go to login
+        if (!user) {
+          console.log("➡️ Index: No user found, navigating to login");
+          if (!hasNavigated.current) {
+            setDestination("/auth/login");
+            setIsReady(true);
+            hasNavigated.current = true;
+            clearTimeout(forceNavigationTimeout);
+          }
+          return;
+        }
+
+        // User exists - check onboarding status
+        console.log("✅ Index: User authenticated, checking onboarding...");
+        
+        try {
+          const onboardingCompleted = await Promise.race([
+            SecureStore.getItemAsync('onboarding_completed'),
+            new Promise<null>((resolve) => setTimeout(() => resolve(null), 1000)) // 1s timeout for SecureStore
+          ]);
+          
+          console.log("📋 Index: Onboarding status:", onboardingCompleted);
+          
+          if (!hasNavigated.current) {
+            if (onboardingCompleted === 'true') {
+              console.log("➡️ Index: Onboarding complete, navigating to main app");
+              setDestination("/(tabs)/(crops)");
+            } else {
+              console.log("➡️ Index: Onboarding needed, navigating to onboarding");
+              setDestination("/onboarding");
+            }
+            setIsReady(true);
+            hasNavigated.current = true;
+            clearTimeout(forceNavigationTimeout);
+          }
+        } catch (error) {
+          console.error("⚠️ Index: Error checking onboarding (defaulting to main app):", error);
+          if (!hasNavigated.current) {
+            setDestination("/(tabs)/(crops)");
+            setIsReady(true);
+            hasNavigated.current = true;
+            clearTimeout(forceNavigationTimeout);
+          }
+        }
+      } catch (error) {
+        console.error("❌ Index: Critical error in startup flow:", error);
+        // On any error, default to login screen
+        if (!hasNavigated.current) {
+          setDestination("/auth/login");
+          setIsReady(true);
+          hasNavigated.current = true;
+          clearTimeout(forceNavigationTimeout);
+        }
       }
     }
-    
-    checkOnboarding();
+
+    determineDestination();
+
+    return () => {
+      console.log("🧹 Index: Cleanup");
+      clearTimeout(forceNavigationTimeout);
+    };
   }, [user, loading]);
 
-  // Show loading screen while checking auth and onboarding
-  if ((loading || checkingOnboarding) && !forceNavigation) {
-    console.log("⏳ Index: Still loading...", { loading, checkingOnboarding, forceNavigation });
+  // Show loading screen while determining destination
+  if (!isReady || !destination) {
+    console.log("⏳ Index: Showing splash screen...", { isReady, destination });
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: farmGreen }}>
         <IconSymbol 
@@ -76,31 +129,7 @@ export default function Index() {
     );
   }
 
-  // If timeout forced navigation and we still don't have user data, go to login
-  if (forceNavigation && !user) {
-    console.log("🚨 Index: Timeout forced navigation to login (no user available)");
-    return <Redirect href="/auth/login" />;
-  }
-
-  // If timeout forced navigation and we have user, skip onboarding check and go to main app
-  if (forceNavigation && user) {
-    console.log("🚨 Index: Timeout forced navigation to main app (user exists)");
-    return <Redirect href="/(tabs)/(crops)" />;
-  }
-
-  // Normal flow: No user -> login
-  if (!user) {
-    console.log("➡️ Index: No user, redirecting to login");
-    return <Redirect href="/auth/login" />;
-  }
-
-  // Normal flow: User needs onboarding
-  if (shouldShowOnboarding) {
-    console.log("➡️ Index: User needs onboarding");
-    return <Redirect href="/onboarding" />;
-  }
-
-  // Normal flow: User authenticated and onboarded -> main app
-  console.log("➡️ Index: User authenticated and onboarded, redirecting to main app");
-  return <Redirect href="/(tabs)/(crops)" />;
+  // Navigate to determined destination
+  console.log("🎯 Index: Navigating to:", destination);
+  return <Redirect href={destination as any} />;
 }

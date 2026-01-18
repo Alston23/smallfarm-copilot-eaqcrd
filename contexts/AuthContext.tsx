@@ -25,8 +25,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Timeout for auth operations to prevent indefinite hanging
-const AUTH_TIMEOUT_MS = 5000; // 5 seconds
+// CRITICAL: Timeout for auth operations to prevent indefinite hanging
+const AUTH_TIMEOUT_MS = 2000; // 2 seconds - must complete before app startup timeout
 
 function openOAuthPopup(provider: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -77,21 +77,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
-    console.log("🔐 AuthContext: Starting user fetch with timeout protection");
+    console.log("🔐 AuthContext: Starting user fetch with", AUTH_TIMEOUT_MS, "ms timeout");
     
     try {
       setLoading(true);
       
-      // Create a timeout promise that rejects after AUTH_TIMEOUT_MS
-      const timeoutPromise = new Promise<never>((_, reject) => {
+      // CRITICAL: Create a timeout promise that resolves (not rejects) after AUTH_TIMEOUT_MS
+      // This ensures loading ALWAYS becomes false, preventing indefinite hanging
+      const timeoutPromise = new Promise<null>((resolve) => {
         setTimeout(() => {
-          reject(new Error("Auth check timed out"));
+          console.warn("⚠️ AuthContext: Auth check timed out after", AUTH_TIMEOUT_MS, "ms");
+          resolve(null);
         }, AUTH_TIMEOUT_MS);
       });
 
       // Race between the actual auth check and the timeout
       const session = await Promise.race([
-        authClient.getSession(),
+        authClient.getSession().catch((error) => {
+          console.error("⚠️ AuthContext: getSession failed:", error);
+          return null;
+        }),
         timeoutPromise
       ]);
 
@@ -100,15 +105,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session.data.user as User);
         
         // Get token from storage
-        if (Platform.OS === "web") {
-          const storedToken = localStorage.getItem(BEARER_TOKEN_KEY);
-          setToken(storedToken);
-        } else {
-          const storedToken = await authClient.getToken();
-          setToken(storedToken?.token || null);
+        try {
+          if (Platform.OS === "web") {
+            const storedToken = localStorage.getItem(BEARER_TOKEN_KEY);
+            setToken(storedToken);
+          } else {
+            const storedToken = await authClient.getToken();
+            setToken(storedToken?.token || null);
+          }
+        } catch (tokenError) {
+          console.error("⚠️ AuthContext: Failed to get token:", tokenError);
+          setToken(null);
         }
       } else {
-        console.log("ℹ️ AuthContext: No user session found");
+        console.log("ℹ️ AuthContext: No user session found (timeout or no session)");
         setUser(null);
         setToken(null);
       }
@@ -117,8 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
       setToken(null);
     } finally {
+      // CRITICAL: Always set loading to false, even on error
       setLoading(false);
-      console.log("🏁 AuthContext: User fetch complete");
+      console.log("🏁 AuthContext: User fetch complete, loading=false");
     }
   }, []);
 
