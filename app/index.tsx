@@ -5,11 +5,31 @@ import { View, ActivityIndicator, Text } from 'react-native';
 import { useAuth } from '@/contexts/AuthContext';
 import { farmGreen } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
+import * as SecureStore from 'expo-secure-store';
+import { useState } from 'react';
 
 export default function Index() {
   const { user, loading } = useAuth();
+  const [checkingOnboarding, setCheckingOnboarding] = useState(true);
+  const [shouldShowOnboarding, setShouldShowOnboarding] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    async function checkOnboarding() {
+      if (!loading && user) {
+        try {
+          const onboardingCompleted = await SecureStore.getItemAsync('onboarding_completed');
+          setShouldShowOnboarding(onboardingCompleted !== 'true');
+        } catch (error) {
+          console.error('Error checking onboarding status:', error);
+          setShouldShowOnboarding(false);
+        }
+      }
+      setCheckingOnboarding(false);
+    }
+    checkOnboarding();
+  }, [user, loading]);
+
+  if (loading || checkingOnboarding) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: farmGreen }}>
         <IconSymbol 
@@ -30,9 +50,9 @@ export default function Index() {
     return <Redirect href="/auth/login" />;
   }
 
-  if (user && !user.onboarding_completed && user.show_onboarding) {
+  if (shouldShowOnboarding) {
     return <Redirect href="/onboarding" />;
   }
 
-  return <Redirect href="/(tabs)/crops" />;
+  return <Redirect href="/(tabs)/(crops)" />;
 }
