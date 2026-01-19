@@ -17,6 +17,7 @@ import { registerEquipmentRoutes } from './routes/equipment.js';
 import { registerFieldBedNotesRoutes } from './routes/field-bed-notes.js';
 import { registerInventoryStorageRoutes } from './routes/inventory-storage.js';
 import { registerReportRoutes } from './routes/reports.js';
+import { registerSeasonRoutes } from './routes/seasons.js';
 
 const schema = { ...appSchema, ...authSchema };
 
@@ -48,6 +49,7 @@ registerEquipmentRoutes(app);
 registerFieldBedNotesRoutes(app);
 registerInventoryStorageRoutes(app);
 registerReportRoutes(app);
+registerSeasonRoutes(app);
 
 // Seed system crops on startup
 await seedSystemCrops(app);

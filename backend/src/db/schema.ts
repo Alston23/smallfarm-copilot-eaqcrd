@@ -138,6 +138,49 @@ export const inventory = pgTable('inventory', {
   updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
 });
 
+// ===== Seasons Management =====
+export const seasons = pgTable('seasons', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: text('user_id').notNull(),
+  name: text('name').notNull(),
+  startDate: timestamp('start_date').notNull(),
+  endDate: timestamp('end_date'),
+  isActive: boolean('is_active').default(true),
+  notes: text('notes'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const seasonYieldEstimates = pgTable('season_yield_estimates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  seasonId: uuid('season_id').notNull().references(() => seasons.id, { onDelete: 'cascade' }),
+  cropId: uuid('crop_id').notNull().references(() => crops.id, { onDelete: 'cascade' }),
+  estimatedYieldAmount: numeric('estimated_yield_amount', { precision: 12, scale: 2 }).notNull(),
+  estimatedYieldUnit: text('estimated_yield_unit').notNull(),
+  estimatedMarketPrice: numeric('estimated_market_price', { precision: 12, scale: 2 }).notNull(),
+  estimatedRevenue: numeric('estimated_revenue', { precision: 12, scale: 2 }).notNull(),
+  estimatedCosts: numeric('estimated_costs', { precision: 12, scale: 2 }).default('0'),
+  estimatedProfit: numeric('estimated_profit', { precision: 12, scale: 2 }).notNull(),
+  marketData: jsonb('market_data'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
+export const seasonActuals = pgTable('season_actuals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  seasonId: uuid('season_id').notNull().references(() => seasons.id, { onDelete: 'cascade' }),
+  cropId: uuid('crop_id').notNull().references(() => crops.id, { onDelete: 'cascade' }),
+  actualYieldAmount: numeric('actual_yield_amount', { precision: 12, scale: 2 }).notNull(),
+  actualYieldUnit: text('actual_yield_unit').notNull(),
+  actualRevenue: numeric('actual_revenue', { precision: 12, scale: 2 }).notNull(),
+  actualCosts: numeric('actual_costs', { precision: 12, scale: 2 }).notNull(),
+  actualProfit: numeric('actual_profit', { precision: 12, scale: 2 }).notNull(),
+  varianceYield: numeric('variance_yield', { precision: 5, scale: 2 }),
+  varianceProfit: numeric('variance_profit', { precision: 5, scale: 2 }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow().$onUpdate(() => new Date()),
+});
+
 // ===== Field/Bed Notes =====
 export const fieldBedNotes = pgTable('field_bed_notes', {
   id: uuid('id').primaryKey().defaultRandom(),
@@ -154,6 +197,7 @@ export const financialTransactions = pgTable('financial_transactions', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: text('user_id').notNull(),
   fieldBedCropId: uuid('field_bed_crop_id').references(() => fieldBedCrops.id, { onDelete: 'set null' }),
+  seasonId: uuid('season_id').references(() => seasons.id, { onDelete: 'set null' }),
   type: text('type', { enum: ['cost', 'revenue'] }).notNull(),
   amount: numeric('amount', { precision: 12, scale: 2 }).notNull(),
   description: text('description').notNull(),
@@ -180,6 +224,7 @@ export const harvests = pgTable('harvests', {
   userId: text('user_id').notNull(),
   fieldBedCropId: uuid('field_bed_crop_id').notNull().references(() => fieldBedCrops.id, { onDelete: 'cascade' }),
   cropId: uuid('crop_id').notNull().references(() => crops.id, { onDelete: 'cascade' }),
+  seasonId: uuid('season_id').references(() => seasons.id, { onDelete: 'set null' }),
   harvestAmount: numeric('harvest_amount', { precision: 12, scale: 2 }).notNull(),
   harvestUnit: text('harvest_unit').notNull(),
   yieldPercentage: numeric('yield_percentage', { precision: 5, scale: 2 }),
@@ -356,5 +401,32 @@ export const fieldBedNotesRelations = relations(fieldBedNotes, ({ one }) => ({
   fieldBed: one(fieldsBeds, {
     fields: [fieldBedNotes.fieldBedId],
     references: [fieldsBeds.id],
+  }),
+}));
+
+export const seasonsRelations = relations(seasons, ({ many }) => ({
+  yieldEstimates: many(seasonYieldEstimates),
+  actuals: many(seasonActuals),
+}));
+
+export const seasonYieldEstimatesRelations = relations(seasonYieldEstimates, ({ one }) => ({
+  season: one(seasons, {
+    fields: [seasonYieldEstimates.seasonId],
+    references: [seasons.id],
+  }),
+  crop: one(crops, {
+    fields: [seasonYieldEstimates.cropId],
+    references: [crops.id],
+  }),
+}));
+
+export const seasonActualsRelations = relations(seasonActuals, ({ one }) => ({
+  season: one(seasons, {
+    fields: [seasonActuals.seasonId],
+    references: [seasons.id],
+  }),
+  crop: one(crops, {
+    fields: [seasonActuals.cropId],
+    references: [crops.id],
   }),
 }));
