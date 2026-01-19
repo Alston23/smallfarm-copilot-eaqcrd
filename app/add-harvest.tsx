@@ -19,6 +19,7 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import Constants from 'expo-constants';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { authenticatedGet, authenticatedPost } from '@/utils/api';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
@@ -31,6 +32,12 @@ interface FieldBedCrop {
     name: string;
   };
   plantingDate: string;
+}
+
+interface Season {
+  id: string;
+  name: string;
+  isActive: boolean;
 }
 
 const HARVEST_UNITS = [
@@ -59,49 +66,55 @@ export default function AddHarvestScreen() {
   const [yieldPercentage, setYieldPercentage] = useState('');
   const [harvestDate, setHarvestDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
 
   const loadPlantings = useCallback(async () => {
     console.log('Loading field bed crops for harvest input');
     setLoadingPlantings(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/fields-beds`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded fields/beds:', data.length);
-        // Extract all plantings from fields/beds
-        const allPlantings: FieldBedCrop[] = [];
-        data.forEach((fieldBed: any) => {
-          if (fieldBed.crops && fieldBed.crops.length > 0) {
-            fieldBed.crops.forEach((crop: any) => {
-              allPlantings.push({
-                id: crop.id,
-                fieldBed: { name: fieldBed.name },
-                crop: { name: crop.crop.name },
-                plantingDate: crop.planting_date,
-              });
+      const data = await authenticatedGet<any[]>('/api/fields-beds');
+      console.log('Loaded fields/beds:', data.length);
+      // Extract all plantings from fields/beds
+      const allPlantings: FieldBedCrop[] = [];
+      data.forEach((fieldBed: any) => {
+        if (fieldBed.crops && fieldBed.crops.length > 0) {
+          fieldBed.crops.forEach((crop: any) => {
+            allPlantings.push({
+              id: crop.id,
+              fieldBed: { name: fieldBed.name },
+              crop: { name: crop.crop.name },
+              plantingDate: crop.planting_date,
             });
-          }
-        });
-        setPlantings(allPlantings);
-        console.log('Total plantings available:', allPlantings.length);
-      } else {
-        console.error('Failed to load plantings:', response.status);
-      }
+          });
+        }
+      });
+      setPlantings(allPlantings);
+      console.log('Total plantings available:', allPlantings.length);
     } catch (error) {
       console.error('Error loading plantings:', error);
     } finally {
       setLoadingPlantings(false);
     }
-  }, [token]);
+  }, []);
+
+  const loadActiveSeason = useCallback(async () => {
+    console.log('Loading active season');
+    try {
+      const seasons = await authenticatedGet<Season[]>('/api/seasons');
+      const active = seasons.find(s => s.isActive);
+      if (active) {
+        console.log('Active season found:', active.name);
+        setActiveSeason(active);
+      }
+    } catch (error) {
+      console.error('Error loading active season:', error);
+    }
+  }, []);
 
   useEffect(() => {
     loadPlantings();
-  }, [loadPlantings]);
+    loadActiveSeason();
+  }, [loadPlantings, loadActiveSeason]);
 
   const handleSubmit = async () => {
     console.log('User tapped Submit Harvest Data button');
@@ -123,42 +136,44 @@ export default function AddHarvestScreen() {
 
     setLoading(true);
     try {
-      console.log('Submitting harvest data:', {
+      const harvestData: any = {
         fieldBedCropId: selectedPlanting,
         harvestAmount,
         harvestUnit,
         yieldPercentage,
         harvestDate: harvestDate.toISOString(),
-      });
+      };
 
-      const response = await fetch(`${BACKEND_URL}/api/harvest`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fieldBedCropId: selectedPlanting,
-          harvestAmount,
-          harvestUnit,
-          yieldPercentage,
-          harvestDate: harvestDate.toISOString(),
-        }),
-      });
-
-      if (response.ok) {
-        console.log('Harvest data submitted successfully');
-        Alert.alert('Success', 'Harvest data recorded successfully', [
-          {
-            text: 'OK',
-            onPress: () => router.back(),
-          },
-        ]);
-      } else {
-        const error = await response.text();
-        console.error('Failed to submit harvest data:', response.status, error);
-        Alert.alert('Error', 'Failed to record harvest data. Please try again.');
+      // Link to active season if available
+      if (activeSeason) {
+        harvestData.seasonId = activeSeason.id;
+        console.log('Linking harvest to active season:', activeSeason.name);
       }
+
+      console.log('Submitting harvest data:', harvestData);
+
+      await authenticatedPost('/api/harvest', harvestData);
+      console.log('Harvest data submitted successfully');
+      
+      // Update season actuals if linked to a season
+      if (activeSeason) {
+        try {
+          await authenticatedPost(`/api/seasons/${activeSeason.id}/actuals/update`, {
+            harvestAmount: parseFloat(harvestAmount),
+          });
+          console.log('Season actuals updated');
+        } catch (error) {
+          console.error('Error updating season actuals:', error);
+          // Don't fail the whole operation if actuals update fails
+        }
+      }
+
+      Alert.alert('Success', 'Harvest data recorded successfully', [
+        {
+          text: 'OK',
+          onPress: () => router.back(),
+        },
+      ]);
     } catch (error) {
       console.error('Error submitting harvest data:', error);
       Alert.alert('Error', 'Failed to record harvest data. Please try again.');
@@ -185,6 +200,19 @@ export default function AddHarvestScreen() {
             <Text style={[styles.headerSubtitle, { color: colors.icon }]}>
               Enter harvest amount and yield percentage for your crop
             </Text>
+            {activeSeason && (
+              <View style={[styles.seasonBanner, { backgroundColor: farmGreen + '20', borderColor: farmGreen }]}>
+                <IconSymbol
+                  ios_icon_name="calendar.badge.clock"
+                  android_material_icon_name="event-available"
+                  size={20}
+                  color={farmGreen}
+                />
+                <Text style={[styles.seasonBannerText, { color: farmGreen }]}>
+                  This harvest will be tracked in "{activeSeason.name}"
+                </Text>
+              </View>
+            )}
           </View>
 
           {loadingPlantings ? (
@@ -399,6 +427,20 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 16,
     lineHeight: 22,
+  },
+  seasonBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginTop: 16,
+    gap: 8,
+  },
+  seasonBannerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    flex: 1,
   },
   loadingContainer: {
     paddingVertical: 48,

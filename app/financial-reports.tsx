@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import { authenticatedPost } from '@/utils/api';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
@@ -28,9 +29,20 @@ interface ReportItem {
   description: string;
   icon: string;
   category: string;
+  route?: string;
 }
 
 const FINANCIAL_REPORTS: ReportItem[] = [
+  // Season Management (NEW)
+  {
+    id: 'season-management',
+    title: 'Season Management',
+    description: 'Track estimated vs actual yields and profits by season with AI-powered market price estimates',
+    icon: 'calendar-today',
+    category: 'Season Tracking',
+    route: '/season-management',
+  },
+  
   // Income Reports
   {
     id: 'income-summary',
@@ -293,6 +305,11 @@ export default function FinancialReportsScreen() {
     console.log('User tapped report:', report.title);
     
     // Navigate to specific report screens
+    if (report.route) {
+      router.push(report.route as any);
+      return;
+    }
+    
     if (report.id === 'yield-per-crop') {
       router.push('/yield-chart');
       return;
@@ -327,23 +344,13 @@ export default function FinancialReportsScreen() {
       const backendReportType = reportTypeMap[reportType] || 'inventory';
 
       // Generate and export the report
-      const response = await fetch(`${BACKEND_URL}/api/reports/export`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { downloadUrl, filename } = await authenticatedPost<{ downloadUrl: string; filename: string }>(
+        '/api/reports/export',
+        {
           reportType: backendReportType,
           format,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate report');
-      }
-
-      const { downloadUrl, filename } = await response.json();
+        }
+      );
       console.log('Report generated:', filename);
 
       // Download and share the file

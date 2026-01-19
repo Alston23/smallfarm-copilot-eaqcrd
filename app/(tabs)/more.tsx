@@ -31,6 +31,23 @@ interface MenuItem {
 
 const MENU_ITEMS: MenuItem[] = [
   {
+    id: 'season-management',
+    title: 'Season Management',
+    description: 'Track estimated vs actual yields and profits by season',
+    icon: 'calendar-today',
+    iosIcon: 'calendar.badge.clock',
+    route: '/season-management',
+    requiresSubscription: false,
+    fullDescription: 'Manage your growing seasons with AI-powered yield and profit estimates. Track actual performance against estimates throughout the season and close out seasons to save historical data.',
+    benefits: [
+      'AI-powered market price estimates for your location',
+      'Track estimated vs actual yields by crop',
+      'Monitor profit margins in real-time',
+      'Close out seasons and save historical data',
+      'Compare season performance year-over-year',
+    ],
+  },
+  {
     id: 'weather',
     title: 'Weather Insights',
     description: 'AI-powered weather analysis and recommendations',

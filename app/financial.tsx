@@ -15,6 +15,7 @@ import { Colors, farmGreen, appleRed } from '@/constants/Colors';
 import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import Constants from 'expo-constants';
+import { authenticatedGet } from '@/utils/api';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
@@ -35,30 +36,22 @@ export default function FinancialScreen() {
     setLoading(true);
     try {
       console.log('Loading financial summary');
-      const response = await fetch(`${BACKEND_URL}/api/financial`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+      const data = await authenticatedGet<any[]>('/api/financial');
+      console.log('Loaded financial summary');
+      // Calculate summary from financial records
+      const totalIncome = data.filter((r: any) => r.type === 'income').reduce((sum: number, r: any) => sum + r.amount, 0);
+      const totalExpenses = data.filter((r: any) => r.type === 'expense').reduce((sum: number, r: any) => sum + r.amount, 0);
+      setSummary({
+        total_income: totalIncome,
+        total_expenses: totalExpenses,
+        profit: totalIncome - totalExpenses,
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded financial summary');
-        // Calculate summary from financial records
-        const totalIncome = data.filter((r: any) => r.type === 'income').reduce((sum: number, r: any) => sum + r.amount, 0);
-        const totalExpenses = data.filter((r: any) => r.type === 'expense').reduce((sum: number, r: any) => sum + r.amount, 0);
-        setSummary({
-          total_income: totalIncome,
-          total_expenses: totalExpenses,
-          profit: totalIncome - totalExpenses,
-        });
-      }
     } catch (error) {
       console.error('Error loading financial summary:', error);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     loadFinancialSummary();

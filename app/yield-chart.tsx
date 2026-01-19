@@ -19,6 +19,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Constants from 'expo-constants';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
+import { authenticatedGet, authenticatedPost } from '@/utils/api';
 
 const BACKEND_URL = Constants.expoConfig?.extra?.backendUrl || 'http://localhost:3000';
 
@@ -56,25 +57,15 @@ export default function YieldChartScreen() {
     console.log('Loading yield data by crop');
     setLoading(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/harvest/yield`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Loaded yield data:', data.length, 'crops');
-        setYieldData(data);
-      } else {
-        console.error('Failed to load yield data:', response.status);
-      }
+      const data = await authenticatedGet<YieldData[]>('/api/harvest/yield');
+      console.log('Loaded yield data:', data.length, 'crops');
+      setYieldData(data);
     } catch (error) {
       console.error('Error loading yield data:', error);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   useEffect(() => {
     loadYieldData();
@@ -93,24 +84,13 @@ export default function YieldChartScreen() {
     setExporting(true);
     
     try {
-      // TODO: Backend Integration - POST /api/reports/export
-      const response = await fetch(`${BACKEND_URL}/api/reports/export`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      const { downloadUrl, filename } = await authenticatedPost<{ downloadUrl: string; filename: string }>(
+        '/api/reports/export',
+        {
           reportType: 'harvest',
           format,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to generate report');
-      }
-
-      const { downloadUrl, filename } = await response.json();
+        }
+      );
       console.log('Report generated:', filename);
 
       // Download and share the file
