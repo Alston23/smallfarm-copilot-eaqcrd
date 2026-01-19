@@ -58,6 +58,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Breakdown of revenue by crop type',
     icon: 'local-florist',
     category: 'Income',
+    route: '/reports/sales-by-crop',
   },
   {
     id: 'sales-by-outlet',
@@ -96,6 +97,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Breakdown of spending by category (seeds, labor, equipment, etc.)',
     icon: 'category',
     category: 'Expenses',
+    route: '/reports/expense-by-category',
   },
   {
     id: 'labor-costs',
@@ -171,6 +173,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Cash inflows and outflows over time',
     icon: 'account-balance',
     category: 'Cash Flow',
+    route: '/reports/cash-flow',
   },
   {
     id: 'cash-forecast',
