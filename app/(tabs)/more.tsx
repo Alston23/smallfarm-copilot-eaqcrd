@@ -180,11 +180,9 @@ export default function MoreScreen() {
   const handleMenuItemPress = (item: MenuItem) => {
     console.log('📱 User tapped menu item:', item.title);
     
-    if (item.requiresSubscription && subscriptionStatus === 'inactive') {
-      console.log('🔒 Feature requires subscription, showing modal');
-      setSelectedFeature(item);
-    } else if (item.route) {
-      console.log('✅ Navigating to:', item.route);
+    // 🔓 PAYWALL BYPASS: Always navigate to the route, ignore subscription requirement
+    if (item.route) {
+      console.log('✅ Navigating to:', item.route, '(paywall bypassed)');
       router.push(item.route as any);
     }
   };
@@ -215,8 +213,8 @@ export default function MoreScreen() {
           />
           <Text style={[styles.devBannerText, { color: farmGreen }]}>
             {isExpoGo 
-              ? 'Development Mode: Subscriptions available in production app'
-              : 'Subscriptions available on iOS and Android apps'}
+              ? 'Development Mode: All features unlocked'
+              : 'All features unlocked'}
           </Text>
         </View>
       )}
@@ -257,11 +255,7 @@ export default function MoreScreen() {
                   <Text style={[styles.menuItemTitle, { color: colors.text }]}>
                     {item.title}
                   </Text>
-                  {item.requiresSubscription && subscriptionStatus === 'inactive' && (
-                    <View style={[styles.premiumBadge, { backgroundColor: farmGreen }]}>
-                      <Text style={styles.premiumBadgeText}>Premium</Text>
-                    </View>
-                  )}
+                  {/* 🔓 PAYWALL BYPASS: Removed premium badge display */}
                 </View>
                 <Text style={[styles.menuItemDescription, { color: colors.text }]}>
                   {item.description}
@@ -285,7 +279,7 @@ export default function MoreScreen() {
         </View>
       </ScrollView>
 
-      {/* Subscription modal */}
+      {/* Subscription modal - kept for reference but won't be shown */}
       {selectedFeature && (
         <SubscriptionModal
           visible={!!selectedFeature}
