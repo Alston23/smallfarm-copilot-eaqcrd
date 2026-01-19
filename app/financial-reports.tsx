@@ -50,6 +50,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Overview of all income sources and revenue streams',
     icon: 'attach-money',
     category: 'Income',
+    route: '/reports/income-summary',
   },
   {
     id: 'sales-by-crop',
@@ -57,6 +58,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Breakdown of revenue by crop type',
     icon: 'local-florist',
     category: 'Income',
+    route: '/reports/income-summary',
   },
   {
     id: 'sales-by-outlet',
@@ -64,6 +66,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Revenue analysis by sales channel (farmers market, CSA, etc.)',
     icon: 'store',
     category: 'Income',
+    route: '/reports/income-summary',
   },
   {
     id: 'customer-revenue',
@@ -71,6 +74,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Top customers and revenue by customer',
     icon: 'people',
     category: 'Income',
+    route: '/reports/income-summary',
   },
   {
     id: 'seasonal-income',
@@ -78,6 +82,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Income trends across seasons and months',
     icon: 'calendar-today',
     category: 'Income',
+    route: '/reports/income-summary',
   },
   
   // Expense Reports
@@ -87,6 +92,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Overview of all expenses and spending categories',
     icon: 'receipt',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   {
     id: 'expense-by-category',
@@ -94,6 +100,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Breakdown of spending by category (seeds, labor, equipment, etc.)',
     icon: 'category',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   {
     id: 'labor-costs',
@@ -101,6 +108,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Analysis of labor expenses and hourly rates',
     icon: 'work',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   {
     id: 'input-costs',
@@ -108,6 +116,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Seeds, fertilizer, and other input expenses',
     icon: 'grass',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   {
     id: 'equipment-costs',
@@ -115,6 +124,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Equipment purchases, repairs, and maintenance costs',
     icon: 'build',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   {
     id: 'utilities-overhead',
@@ -122,6 +132,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Water, electricity, insurance, and other overhead costs',
     icon: 'home',
     category: 'Expenses',
+    route: '/reports/expense-summary',
   },
   
   // Profitability Reports
@@ -131,6 +142,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Comprehensive P&L statement with income and expenses',
     icon: 'assessment',
     category: 'Profitability',
+    route: '/reports/profit-loss',
   },
   {
     id: 'profit-by-crop',
@@ -138,6 +150,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Net profit analysis for each crop type',
     icon: 'trending-up',
     category: 'Profitability',
+    route: '/reports/profit-loss',
   },
   {
     id: 'profit-margins',
@@ -145,6 +158,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Gross and net profit margin analysis',
     icon: 'percent',
     category: 'Profitability',
+    route: '/reports/profit-loss',
   },
   {
     id: 'roi-analysis',
@@ -152,6 +166,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'ROI for crops, equipment, and infrastructure investments',
     icon: 'show-chart',
     category: 'Profitability',
+    route: '/reports/profit-loss',
   },
   {
     id: 'break-even',
@@ -159,6 +174,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Break-even points for crops and overall operations',
     icon: 'balance',
     category: 'Profitability',
+    route: '/reports/profit-loss',
   },
   
   // Cash Flow Reports
@@ -168,6 +184,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Cash inflows and outflows over time',
     icon: 'account-balance',
     category: 'Cash Flow',
+    route: '/reports/profit-loss',
   },
   {
     id: 'cash-forecast',
@@ -175,6 +192,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Projected cash flow for upcoming months',
     icon: 'timeline',
     category: 'Cash Flow',
+    route: '/reports/profit-loss',
   },
   {
     id: 'accounts-receivable',
@@ -182,6 +200,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Outstanding payments and aging report',
     icon: 'payment',
     category: 'Cash Flow',
+    route: '/reports/profit-loss',
   },
   {
     id: 'accounts-payable',
@@ -189,6 +208,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Bills due and payment schedule',
     icon: 'credit-card',
     category: 'Cash Flow',
+    route: '/reports/profit-loss',
   },
   
   // Production Reports
@@ -198,6 +218,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Track harvest amounts and yield percentages for each crop',
     icon: 'agriculture',
     category: 'Production',
+    route: '/yield-chart',
   },
   {
     id: 'yield-revenue',
@@ -205,6 +226,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Crop yields compared to revenue generated',
     icon: 'agriculture',
     category: 'Production',
+    route: '/yield-chart',
   },
   {
     id: 'cost-per-unit',
@@ -212,6 +234,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Production cost per pound/unit for each crop',
     icon: 'calculate',
     category: 'Production',
+    route: '/yield-chart',
   },
   {
     id: 'field-profitability',
@@ -219,6 +242,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Profit analysis by field or growing area',
     icon: 'map',
     category: 'Production',
+    route: '/yield-chart',
   },
   
   // Tax & Compliance Reports
@@ -310,12 +334,7 @@ export default function FinancialReportsScreen() {
       return;
     }
     
-    if (report.id === 'yield-per-crop') {
-      router.push('/yield-chart');
-      return;
-    }
-    
-    // Show export options
+    // Show export options for reports without dedicated screens
     Alert.alert(
       report.title,
       'Export this report',
