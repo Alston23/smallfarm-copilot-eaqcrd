@@ -121,7 +121,7 @@ export default function InventoryScreen() {
   const handleDeleteItem = (item: InventoryItem) => {
     Alert.alert(
       'Delete Item',
-      `Are you sure you want to delete ${item.name}?`,
+      `Are you sure you want to delete ${item.name}? Storage will be updated automatically.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -129,7 +129,7 @@ export default function InventoryScreen() {
           style: 'destructive',
           onPress: async () => {
             try {
-              console.log('Deleting inventory item:', item.id);
+              console.log('Deleting inventory item:', item.id, '- storage will be updated automatically');
               const response = await fetch(`${BACKEND_URL}/api/inventory/${item.id}`, {
                 method: 'DELETE',
                 headers: {
@@ -138,6 +138,7 @@ export default function InventoryScreen() {
               });
 
               if (response.ok) {
+                console.log('Item deleted, storage updated automatically');
                 loadInventory();
               }
             } catch (error) {

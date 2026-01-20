@@ -292,8 +292,8 @@ export default function AddInventoryScreen() {
       });
 
       if (response.ok) {
-        console.log('Inventory item created successfully');
-        Alert.alert('Success', 'Inventory item added successfully', [
+        console.log('Inventory item created successfully, storage updated automatically');
+        Alert.alert('Success', 'Inventory item added and storage updated automatically', [
           {
             text: 'OK',
             onPress: () => router.back(),

@@ -168,7 +168,7 @@ export default function AddHarvestScreen() {
         }
       }
 
-      Alert.alert('Success', 'Harvest data recorded successfully', [
+      Alert.alert('Success', 'Harvest recorded and storage updated automatically', [
         {
           text: 'OK',
           onPress: () => router.back(),

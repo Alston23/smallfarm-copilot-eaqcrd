@@ -77,6 +77,30 @@ export default function StorageManagementScreen() {
     }
   }, [token]);
 
+  const handleRecalculate = async () => {
+    console.log('User recalculating storage from inventory');
+    setLoading(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/inventory/storage/recalculate`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Storage recalculated:', data);
+        Alert.alert('Success', 'Storage has been recalculated based on your current inventory');
+        loadStorage();
+      } else {
+        throw new Error('Failed to recalculate storage');
+      }
+    } catch (error) {
+      console.error('Error recalculating storage:', error);
+      Alert.alert('Error', 'Failed to recalculate storage');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     loadStorage();
   }, [loadStorage]);
@@ -249,6 +273,14 @@ export default function StorageManagementScreen() {
             </Text>
           </View>
 
+          {/* Auto-Update Info */}
+          <View style={[styles.infoCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <IconSymbol ios_icon_name="info.circle.fill" android_material_icon_name="info" size={24} color={farmGreen} />
+            <Text style={[styles.infoText, { color: colors.text }]}>
+              Storage automatically updates when you add inventory items or record harvests. Use the recalculate button if storage seems incorrect.
+            </Text>
+          </View>
+
           <TouchableOpacity
             style={[styles.saveButton, { backgroundColor: farmGreen }]}
             onPress={handleSave}
@@ -259,7 +291,22 @@ export default function StorageManagementScreen() {
             ) : (
               <>
                 <IconSymbol ios_icon_name="checkmark" android_material_icon_name="check" size={24} color="#fff" />
-                <Text style={styles.saveButtonText}>Save Storage Information</Text>
+                <Text style={styles.saveButtonText}>Save Storage Capacity</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.recalculateButton, { backgroundColor: colors.card, borderColor: farmGreen }]}
+            onPress={handleRecalculate}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color={farmGreen} />
+            ) : (
+              <>
+                <IconSymbol ios_icon_name="arrow.clockwise" android_material_icon_name="refresh" size={24} color={farmGreen} />
+                <Text style={[styles.recalculateButtonText, { color: farmGreen }]}>Recalculate from Inventory</Text>
               </>
             )}
           </TouchableOpacity>
@@ -340,9 +387,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     borderWidth: 1,
-    marginBottom: 24,
+    marginBottom: 16,
   },
   alertText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 24,
+  },
+  infoText: {
     flex: 1,
     fontSize: 14,
     lineHeight: 20,
@@ -354,9 +415,23 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
     gap: 8,
+    marginBottom: 12,
   },
   saveButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  recalculateButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 2,
+  },
+  recalculateButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },
