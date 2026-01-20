@@ -17,6 +17,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Constants from "expo-constants";
 
+// Prevent auto-hide so we can control when to hide it
 SplashScreen.preventAutoHideAsync();
 
 // Log backend URL at app startup for debugging
@@ -30,11 +31,15 @@ function AppContent() {
 
   useEffect(() => {
     if (loaded) {
+      console.log("✅ Fonts loaded, hiding splash screen");
+      // Hide splash screen as soon as fonts are loaded
+      // Don't wait for auth or any other checks
       SplashScreen.hideAsync();
     }
   }, [loaded]);
 
   if (!loaded) {
+    // Fonts not loaded yet, keep splash screen visible
     return null;
   }
 

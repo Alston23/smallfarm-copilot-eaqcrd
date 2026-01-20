@@ -25,9 +25,6 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// CRITICAL: Timeout for auth operations to prevent indefinite hanging
-const AUTH_TIMEOUT_MS = 2000; // 2 seconds - must complete before app startup timeout
-
 function openOAuthPopup(provider: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const popupUrl = `${window.location.origin}/auth-popup?provider=${provider}`;
@@ -77,28 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUser = useCallback(async () => {
-    console.log("🔐 AuthContext: Starting user fetch with", AUTH_TIMEOUT_MS, "ms timeout");
+    console.log("🔐 AuthContext: Fetching user session");
     
     try {
       setLoading(true);
       
-      // CRITICAL: Create a timeout promise that resolves (not rejects) after AUTH_TIMEOUT_MS
-      // This ensures loading ALWAYS becomes false, preventing indefinite hanging
-      const timeoutPromise = new Promise<null>((resolve) => {
-        setTimeout(() => {
-          console.warn("⚠️ AuthContext: Auth check timed out after", AUTH_TIMEOUT_MS, "ms");
-          resolve(null);
-        }, AUTH_TIMEOUT_MS);
-      });
-
-      // Race between the actual auth check and the timeout
-      const session = await Promise.race([
-        authClient.getSession().catch((error) => {
-          console.error("⚠️ AuthContext: getSession failed:", error);
-          return null;
-        }),
-        timeoutPromise
-      ]);
+      const session = await authClient.getSession();
 
       if (session?.data?.user) {
         console.log("✅ AuthContext: User session found:", session.data.user.email);
@@ -118,18 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(null);
         }
       } else {
-        console.log("ℹ️ AuthContext: No user session found (timeout or no session)");
+        console.log("ℹ️ AuthContext: No user session found");
         setUser(null);
         setToken(null);
       }
     } catch (error) {
-      console.error("⚠️ AuthContext: Failed to fetch user (defaulting to signed out):", error);
+      console.error("⚠️ AuthContext: Failed to fetch user:", error);
       setUser(null);
       setToken(null);
     } finally {
-      // CRITICAL: Always set loading to false, even on error
       setLoading(false);
-      console.log("🏁 AuthContext: User fetch complete, loading=false");
+      console.log("🏁 AuthContext: User fetch complete");
     }
   }, []);
 

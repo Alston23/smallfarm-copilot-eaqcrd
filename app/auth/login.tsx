@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -16,12 +16,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "expo-router";
 import { farmGreen, farmGreenDark, farmGreenLight } from "@/constants/Colors";
 import { IconSymbol } from "@/components/IconSymbol";
+import * as SecureStore from 'expo-secure-store';
 
 type Mode = "signin" | "signup";
 
 export default function AuthScreen() {
   const router = useRouter();
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, signInWithGitHub, loading: authLoading } =
+  const { user, signInWithEmail, signUpWithEmail, signInWithGoogle, signInWithApple, signInWithGitHub, loading: authLoading } =
     useAuth();
 
   const [mode, setMode] = useState<Mode>("signin");
@@ -29,8 +30,53 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
-  if (authLoading) {
+  // Check if user is already authenticated AFTER screen is visible
+  useEffect(() => {
+    console.log("🔍 Login screen: Checking if user is already authenticated");
+    
+    async function checkAuthAndRedirect() {
+      try {
+        // Wait for auth context to finish loading
+        if (authLoading) {
+          console.log("⏳ Login screen: Waiting for auth to load...");
+          return;
+        }
+
+        // If user is authenticated, redirect to appropriate screen
+        if (user) {
+          console.log("✅ Login screen: User is authenticated, checking onboarding status");
+          
+          try {
+            const onboardingCompleted = await SecureStore.getItemAsync('onboarding_completed');
+            
+            if (onboardingCompleted === 'true') {
+              console.log("➡️ Login screen: Redirecting to main app");
+              router.replace("/(tabs)/(crops)");
+            } else {
+              console.log("➡️ Login screen: Redirecting to onboarding");
+              router.replace("/onboarding");
+            }
+          } catch (error) {
+            console.error("⚠️ Login screen: Error checking onboarding, defaulting to main app:", error);
+            router.replace("/(tabs)/(crops)");
+          }
+        } else {
+          console.log("ℹ️ Login screen: No user authenticated, staying on login screen");
+        }
+      } catch (error) {
+        console.error("❌ Login screen: Error checking auth:", error);
+      } finally {
+        setCheckingAuth(false);
+      }
+    }
+
+    checkAuthAndRedirect();
+  }, [user, authLoading, router]);
+
+  // Show loading state while checking auth (but screen is visible)
+  if (checkingAuth || authLoading) {
     return (
       <View style={styles.loadingContainer}>
         <IconSymbol 
@@ -40,6 +86,7 @@ export default function AuthScreen() {
           color="#fff" 
         />
         <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
+        <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
   }
@@ -214,6 +261,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: farmGreen,
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 18,
+    marginTop: 16,
+    fontWeight: "600",
   },
   scrollContent: {
     flexGrow: 1,
