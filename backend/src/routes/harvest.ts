@@ -41,6 +41,61 @@ interface YieldDataByCrop {
   }[];
 }
 
+// Helper function to update storage after harvest
+async function updateHarvestStorage(
+  app: App,
+  userId: string,
+  harvestAmount: number,
+  cropName: string
+): Promise<void> {
+  // Vegetables and fruits use cold storage
+  const coldStorageCrops = ['tomato', 'pepper', 'lettuce', 'carrot', 'strawberry', 'apple', 'grape'];
+  const usesColdStorage = coldStorageCrops.some((crop) =>
+    cropName.toLowerCase().includes(crop.toLowerCase())
+  );
+
+  // Calculate storage volume: harvestAmount * 0.05 cubic feet per unit
+  const storageVolume = harvestAmount * 0.05;
+
+  // Get first inventory item for user to update storage
+  const items = await app.db.query.inventory.findMany({
+    where: eq(schema.inventory.userId, userId),
+  });
+
+  if (items.length === 0) return;
+
+  const firstItem = items[0];
+  const storageField = usesColdStorage ? 'cold' : 'dry';
+  const currentValue = usesColdStorage
+    ? (firstItem.coldStorageUsed ? parseFloat(firstItem.coldStorageUsed) : 0)
+    : (firstItem.dryStorageUsed ? parseFloat(firstItem.dryStorageUsed) : 0);
+
+  const newValue = currentValue + storageVolume;
+
+  const updateData: Record<string, any> = {};
+  if (usesColdStorage) {
+    updateData.coldStorageUsed = newValue.toString();
+  } else {
+    updateData.dryStorageUsed = newValue.toString();
+  }
+
+  await app.db
+    .update(schema.inventory)
+    .set(updateData)
+    .where(eq(schema.inventory.id, firstItem.id));
+
+  app.logger.info(
+    {
+      storageType: storageField,
+      harvestAmount,
+      storageVolume,
+      oldValue: currentValue,
+      newValue,
+    },
+    'Harvest storage usage updated'
+  );
+}
+
 export function registerHarvestRoutes(app: App): void {
   const requireAuth = app.requireAuth();
 
@@ -167,6 +222,11 @@ export function registerHarvestRoutes(app: App): void {
           return reply.status(404).send({ error: 'Field bed crop not found' });
         }
 
+        // Get crop info for storage calculation
+        const crop = await app.db.query.crops.findFirst({
+          where: eq(schema.crops.id, fieldBedCrop.cropId),
+        });
+
         const [harvest] = await app.db
           .insert(schema.harvests)
           .values({
@@ -181,9 +241,14 @@ export function registerHarvestRoutes(app: App): void {
           })
           .returning();
 
+        // Update storage usage based on harvest
+        if (crop) {
+          await updateHarvestStorage(app, session.user.id, parseFloat(harvestAmount), crop.name);
+        }
+
         app.logger.info(
-          { harvestId: harvest.id, fieldBedCropId },
-          'Harvest data recorded successfully'
+          { harvestId: harvest.id, fieldBedCropId, harvestAmount },
+          'Harvest data recorded and storage updated'
         );
 
         return harvest;

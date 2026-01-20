@@ -49,6 +49,70 @@ interface InventoryItem {
   needsReorder?: boolean;
 }
 
+// Helper function to determine storage type for category
+function getStorageType(category: InventoryCategory): 'cold' | 'dry' {
+  const coldStorageCategories = ['seeds', 'transplants'];
+  return coldStorageCategories.includes(category) ? 'cold' : 'dry';
+}
+
+// Helper function to calculate storage volume
+function calculateStorageVolume(quantity: number): number {
+  // 1 unit of item = 0.1 cubic feet
+  return quantity * 0.1;
+}
+
+// Helper function to update storage after inventory change
+async function updateStorageUsage(
+  app: App,
+  userId: string,
+  category: InventoryCategory,
+  volumeChange: number,
+  isAddition: boolean
+): Promise<void> {
+  const storageType = getStorageType(category);
+  const storageField =
+    storageType === 'cold' ? schema.inventory.coldStorageUsed : schema.inventory.dryStorageUsed;
+
+  // Get first inventory item for user to update storage
+  const items = await app.db.query.inventory.findMany({
+    where: eq(schema.inventory.userId, userId),
+  });
+
+  if (items.length === 0) return;
+
+  const firstItem = items[0];
+  const currentValue = storageType === 'cold'
+    ? (firstItem.coldStorageUsed ? parseFloat(firstItem.coldStorageUsed) : 0)
+    : (firstItem.dryStorageUsed ? parseFloat(firstItem.dryStorageUsed) : 0);
+
+  // Calculate new value
+  let newValue = isAddition ? currentValue + volumeChange : currentValue - volumeChange;
+  newValue = Math.max(0, newValue); // Prevent negative storage
+
+  const updateData: Record<string, any> = {};
+  if (storageType === 'cold') {
+    updateData.coldStorageUsed = newValue.toString();
+  } else {
+    updateData.dryStorageUsed = newValue.toString();
+  }
+
+  await app.db
+    .update(schema.inventory)
+    .set(updateData)
+    .where(eq(schema.inventory.id, firstItem.id));
+
+  app.logger.info(
+    {
+      storageType,
+      oldValue: currentValue,
+      newValue,
+      volumeChange,
+      isAddition,
+    },
+    'Storage usage updated'
+  );
+}
+
 export function registerInventoryRoutes(app: App): void {
   const requireAuth = app.requireAuth();
 
@@ -94,7 +158,7 @@ export function registerInventoryRoutes(app: App): void {
         request.body;
 
       app.logger.info(
-        { name, category, subcategory },
+        { name, category, subcategory, quantity },
         'Creating inventory item'
       );
 
@@ -102,6 +166,7 @@ export function registerInventoryRoutes(app: App): void {
       if (!session) return;
 
       try {
+        const quantityNum = parseFloat(quantity);
         const [item] = await app.db
           .insert(schema.inventory)
           .values({
@@ -109,12 +174,16 @@ export function registerInventoryRoutes(app: App): void {
             name,
             category: category as any,
             subcategory,
-            quantity: parseFloat(quantity).toString(),
+            quantity: quantityNum.toString(),
             unit,
             notes,
             reorderLevel: reorderLevel ? parseFloat(reorderLevel).toString() : undefined,
           })
           .returning();
+
+        // Update storage usage
+        const storageVolume = calculateStorageVolume(quantityNum);
+        await updateStorageUsage(app, session.user.id, category, storageVolume, true);
 
         const itemWithStatus: InventoryItem = {
           ...item,
@@ -123,8 +192,8 @@ export function registerInventoryRoutes(app: App): void {
         };
 
         app.logger.info(
-          { itemId: item.id, name, category },
-          'Inventory item created successfully'
+          { itemId: item.id, name, category, storageVolume },
+          'Inventory item created and storage updated'
         );
 
         return itemWithStatus;
@@ -148,12 +217,21 @@ export function registerInventoryRoutes(app: App): void {
       const { id } = request.params;
       const { name, subcategory, quantity, unit, notes, reorderLevel } = request.body;
 
-      app.logger.info({ itemId: id }, 'Updating inventory item');
+      app.logger.info({ itemId: id, newQuantity: quantity }, 'Updating inventory item');
 
       const session = await requireAuth(request, reply);
       if (!session) return;
 
       try {
+        // Get current item to calculate storage changes
+        const currentItem = await app.db.query.inventory.findFirst({
+          where: eq(schema.inventory.id, id),
+        });
+
+        if (!currentItem) {
+          return reply.status(404).send({ error: 'Item not found' });
+        }
+
         const updateData: any = {};
         if (name !== undefined) updateData.name = name;
         if (subcategory !== undefined) updateData.subcategory = subcategory;
@@ -169,13 +247,33 @@ export function registerInventoryRoutes(app: App): void {
           .where(eq(schema.inventory.id, id))
           .returning();
 
+        // Update storage if quantity changed
+        if (quantity !== undefined) {
+          const oldQuantity = parseFloat(currentItem.quantity);
+          const newQuantity = parseFloat(quantity);
+          const quantityDifference = newQuantity - oldQuantity;
+          const storageVolumeDifference = calculateStorageVolume(Math.abs(quantityDifference));
+          const isAddition = quantityDifference > 0;
+
+          await updateStorageUsage(
+            app,
+            session.user.id,
+            currentItem.category as InventoryCategory,
+            storageVolumeDifference,
+            isAddition
+          );
+        }
+
         const itemWithStatus: InventoryItem = {
           ...item,
           needsReorder:
             item.reorderLevel && parseFloat(item.quantity) <= parseFloat(item.reorderLevel),
         };
 
-        app.logger.info({ itemId: id }, 'Inventory item updated successfully');
+        app.logger.info(
+          { itemId: id, oldQuantity: currentItem.quantity, newQuantity: quantity },
+          'Inventory item updated and storage recalculated'
+        );
 
         return itemWithStatus;
       } catch (error) {
@@ -197,9 +295,31 @@ export function registerInventoryRoutes(app: App): void {
       if (!session) return;
 
       try {
+        // Get item before deletion to calculate storage removal
+        const itemToDelete = await app.db.query.inventory.findFirst({
+          where: eq(schema.inventory.id, id),
+        });
+
+        if (!itemToDelete) {
+          return reply.status(404).send({ error: 'Item not found' });
+        }
+
         await app.db.delete(schema.inventory).where(eq(schema.inventory.id, id));
 
-        app.logger.info({ itemId: id }, 'Inventory item deleted successfully');
+        // Update storage usage - subtract this item's storage
+        const storageVolume = calculateStorageVolume(parseFloat(itemToDelete.quantity));
+        await updateStorageUsage(
+          app,
+          session.user.id,
+          itemToDelete.category as InventoryCategory,
+          storageVolume,
+          false
+        );
+
+        app.logger.info(
+          { itemId: id, storageVolume },
+          'Inventory item deleted and storage updated'
+        );
 
         return { success: true };
       } catch (error) {
@@ -336,6 +456,70 @@ export function registerInventoryRoutes(app: App): void {
         return categories;
       } catch (error) {
         app.logger.error({ err: error }, 'Failed to fetch inventory categories');
+        throw error;
+      }
+    }
+  );
+
+  // GET /api/inventory/storage/recalculate - Recalculate storage from scratch
+  app.fastify.get<{}>(
+    '/api/inventory/storage/recalculate',
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      app.logger.info({}, 'Recalculating storage usage');
+
+      const session = await requireAuth(request, reply);
+      if (!session) return;
+
+      try {
+        // Get all inventory items for user
+        const items = await app.db.query.inventory.findMany({
+          where: eq(schema.inventory.userId, session.user.id),
+        });
+
+        if (items.length === 0) {
+          return { success: true, storage: { coldStorageUsed: 0, dryStorageUsed: 0 } };
+        }
+
+        // Calculate totals by storage type
+        let totalColdStorage = 0;
+        let totalDryStorage = 0;
+
+        for (const item of items) {
+          const quantity = parseFloat(item.quantity);
+          const storageVolume = calculateStorageVolume(quantity);
+          const storageType = getStorageType(item.category as InventoryCategory);
+
+          if (storageType === 'cold') {
+            totalColdStorage += storageVolume;
+          } else {
+            totalDryStorage += storageVolume;
+          }
+        }
+
+        // Update first item with recalculated totals
+        const firstItem = items[0];
+        await app.db
+          .update(schema.inventory)
+          .set({
+            coldStorageUsed: totalColdStorage.toString(),
+            dryStorageUsed: totalDryStorage.toString(),
+          })
+          .where(eq(schema.inventory.id, firstItem.id));
+
+        app.logger.info(
+          { totalColdStorage, totalDryStorage, itemCount: items.length },
+          'Storage recalculated successfully'
+        );
+
+        return {
+          success: true,
+          storage: {
+            coldStorageUsed: totalColdStorage,
+            dryStorageUsed: totalDryStorage,
+          },
+        };
+      } catch (error) {
+        app.logger.error({ err: error }, 'Failed to recalculate storage');
         throw error;
       }
     }
