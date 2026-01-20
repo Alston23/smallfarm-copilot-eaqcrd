@@ -66,6 +66,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Revenue analysis by sales channel (farmers market, CSA, etc.)',
     icon: 'store',
     category: 'Income',
+    route: '/reports/sales-by-outlet',
   },
   {
     id: 'customer-revenue',
@@ -73,6 +74,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Top customers and revenue by customer',
     icon: 'people',
     category: 'Income',
+    route: '/reports/customer-revenue',
   },
   {
     id: 'seasonal-income',
@@ -80,6 +82,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Income trends across seasons and months',
     icon: 'calendar-today',
     category: 'Income',
+    route: '/reports/seasonal-income',
   },
   
   // Expense Reports
@@ -105,6 +108,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Analysis of labor expenses and hourly rates',
     icon: 'work',
     category: 'Expenses',
+    route: '/reports/labor-costs',
   },
   {
     id: 'input-costs',
@@ -112,6 +116,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Seeds, fertilizer, and other input expenses',
     icon: 'grass',
     category: 'Expenses',
+    route: '/reports/input-costs',
   },
   {
     id: 'equipment-costs',
@@ -119,6 +124,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Equipment purchases, repairs, and maintenance costs',
     icon: 'build',
     category: 'Expenses',
+    route: '/reports/equipment-costs',
   },
   {
     id: 'utilities-overhead',
@@ -126,6 +132,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Water, electricity, insurance, and other overhead costs',
     icon: 'home',
     category: 'Expenses',
+    route: '/reports/utilities-overhead',
   },
   
   // Profitability Reports
@@ -143,6 +150,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Net profit analysis for each crop type',
     icon: 'trending-up',
     category: 'Profitability',
+    route: '/reports/profit-by-crop',
   },
   {
     id: 'profit-margins',
@@ -150,6 +158,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Gross and net profit margin analysis',
     icon: 'percent',
     category: 'Profitability',
+    route: '/reports/profit-margins',
   },
   {
     id: 'roi-analysis',
@@ -157,6 +166,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'ROI for crops, equipment, and infrastructure investments',
     icon: 'show-chart',
     category: 'Profitability',
+    route: '/reports/roi-analysis',
   },
   {
     id: 'break-even',
@@ -164,6 +174,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Break-even points for crops and overall operations',
     icon: 'balance',
     category: 'Profitability',
+    route: '/reports/break-even',
   },
   
   // Cash Flow Reports
@@ -181,6 +192,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Projected cash flow for upcoming months',
     icon: 'timeline',
     category: 'Cash Flow',
+    route: '/reports/cash-forecast',
   },
   {
     id: 'accounts-receivable',
@@ -188,6 +200,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Outstanding payments and aging report',
     icon: 'payment',
     category: 'Cash Flow',
+    route: '/reports/accounts-receivable',
   },
   {
     id: 'accounts-payable',
@@ -195,6 +208,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Bills due and payment schedule',
     icon: 'credit-card',
     category: 'Cash Flow',
+    route: '/reports/accounts-payable',
   },
   
   // Production Reports
@@ -212,6 +226,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Crop yields compared to revenue generated',
     icon: 'agriculture',
     category: 'Production',
+    route: '/reports/yield-revenue',
   },
   {
     id: 'cost-per-unit',
@@ -219,6 +234,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Production cost per pound/unit for each crop',
     icon: 'calculate',
     category: 'Production',
+    route: '/reports/cost-per-unit',
   },
   {
     id: 'field-profitability',
@@ -226,6 +242,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Profit analysis by field or growing area',
     icon: 'map',
     category: 'Production',
+    route: '/reports/field-profitability',
   },
   
   // Tax & Compliance Reports
@@ -235,6 +252,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Annual tax summary and deductible expenses',
     icon: 'description',
     category: 'Tax & Compliance',
+    route: '/reports/tax-summary',
   },
   {
     id: 'quarterly-taxes',
@@ -242,6 +260,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Estimated quarterly tax payments',
     icon: 'event',
     category: 'Tax & Compliance',
+    route: '/reports/quarterly-taxes',
   },
   {
     id: 'depreciation',
@@ -249,6 +268,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Asset depreciation for tax purposes',
     icon: 'trending-down',
     category: 'Tax & Compliance',
+    route: '/reports/depreciation',
   },
   {
     id: 'mileage-log',
@@ -256,6 +276,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Vehicle mileage for tax deductions',
     icon: 'directions-car',
     category: 'Tax & Compliance',
+    route: '/reports/mileage-log',
   },
   
   // Comparative Reports
@@ -265,6 +286,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Compare financial performance across years',
     icon: 'compare-arrows',
     category: 'Comparative',
+    route: '/reports/year-over-year',
   },
   {
     id: 'budget-vs-actual',
@@ -272,6 +294,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Compare budgeted amounts to actual spending',
     icon: 'fact-check',
     category: 'Comparative',
+    route: '/reports/budget-vs-actual',
   },
   {
     id: 'benchmark-report',
@@ -279,6 +302,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Compare your farm to industry averages',
     icon: 'leaderboard',
     category: 'Comparative',
+    route: '/reports/benchmark-report',
   },
   
   // Custom Reports
@@ -288,6 +312,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Generate reports for any custom date range',
     icon: 'date-range',
     category: 'Custom',
+    route: '/reports/custom-date-range',
   },
   {
     id: 'export-data',
@@ -295,6 +320,7 @@ const FINANCIAL_REPORTS: ReportItem[] = [
     description: 'Export data to CSV or PDF for external analysis',
     icon: 'download',
     category: 'Custom',
+    route: '/reports/export-data',
   },
 ];
 
@@ -311,21 +337,17 @@ export default function FinancialReportsScreen() {
   const handleReportPress = (report: ReportItem) => {
     console.log('User tapped report:', report.title);
     
-    // Navigate to specific report screens if route exists
+    // Navigate to specific report screens
     if (report.route) {
       router.push(report.route as any);
       return;
     }
     
-    // For reports without dedicated screens, show "Coming Soon" message
+    // This should never happen now since all reports have routes
     Alert.alert(
       report.title,
-      'This detailed report view is coming soon! For now, you can export the data.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Export as CSV', onPress: () => exportReport(report.id, 'csv') },
-        { text: 'Export as PDF', onPress: () => exportReport(report.id, 'pdf') },
-      ]
+      'This report is not yet available.',
+      [{ text: 'OK' }]
     );
   };
 
@@ -430,18 +452,9 @@ export default function FinancialReportsScreen() {
                   </View>
                   
                   <View style={styles.reportContent}>
-                    <View style={styles.reportTitleRow}>
-                      <Text style={[styles.reportTitle, { color: colors.text }]}>
-                        {report.title}
-                      </Text>
-                      {!report.route && (
-                        <View style={[styles.comingSoonBadge, { backgroundColor: farmGreen + '30' }]}>
-                          <Text style={[styles.comingSoonText, { color: farmGreen }]}>
-                            Coming Soon
-                          </Text>
-                        </View>
-                      )}
-                    </View>
+                    <Text style={[styles.reportTitle, { color: colors.text }]}>
+                      {report.title}
+                    </Text>
                     <Text style={[styles.reportDescription, { color: colors.icon }]}>
                       {report.description}
                     </Text>
@@ -460,7 +473,7 @@ export default function FinancialReportsScreen() {
 
           <View style={styles.footer}>
             <Text style={[styles.footerText, { color: colors.icon }]}>
-              More detailed report views coming soon! You can export data for any report.
+              All reports are now accessible! Tap any report to view details.
             </Text>
           </View>
         </ScrollView>
@@ -520,25 +533,10 @@ const styles = StyleSheet.create({
   reportContent: {
     flex: 1,
   },
-  reportTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
   reportTitle: {
     fontSize: 16,
     fontWeight: '600',
-  },
-  comingSoonBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  comingSoonText: {
-    fontSize: 11,
-    fontWeight: '600',
+    marginBottom: 4,
   },
   reportDescription: {
     fontSize: 14,
