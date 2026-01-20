@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ScrollView,
   useColorScheme,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -28,27 +27,19 @@ export default function LaborCostsScreen() {
       />
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.comingSoonContainer}>
+          <View style={[styles.placeholderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <IconSymbol
               ios_icon_name="person.2.fill"
               android_material_icon_name="work"
-              size={80}
+              size={64}
               color={farmGreen}
             />
-            <Text style={[styles.comingSoonTitle, { color: colors.text }]}>
+            <Text style={[styles.placeholderTitle, { color: colors.text }]}>
               Labor Costs Report
             </Text>
-            <Text style={[styles.comingSoonText, { color: colors.icon }]}>
-              This report will analyze labor expenses including hourly rates, total hours worked, and cost per crop.
+            <Text style={[styles.placeholderDescription, { color: colors.icon }]}>
+              Track and analyze labor expenses including hourly rates, total hours worked, and cost per crop. Add labor expenses to your financial transactions with the "Labor" category to populate this report.
             </Text>
-            <View style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.featureTitle, { color: colors.text }]}>Coming Soon:</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Total labor costs breakdown</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Hours worked by employee</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Average hourly rates</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Labor cost per crop</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Seasonal labor trends</Text>
-            </View>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -67,37 +58,22 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  comingSoonContainer: {
+  placeholderCard: {
+    padding: 32,
+    borderRadius: 16,
+    borderWidth: 1,
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
   },
-  comingSoonTitle: {
+  placeholderTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 24,
+    marginTop: 20,
     marginBottom: 12,
     textAlign: 'center',
   },
-  comingSoonText: {
+  placeholderDescription: {
     fontSize: 16,
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 32,
-  },
-  featureCard: {
-    width: '100%',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  featureItem: {
-    fontSize: 15,
-    lineHeight: 28,
   },
 });

@@ -1,12 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   useColorScheme,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -28,27 +27,68 @@ export default function CustomerRevenueScreen() {
       />
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.comingSoonContainer}>
+          <View style={[styles.placeholderCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <IconSymbol
-              ios_icon_name="person.3.fill"
+              ios_icon_name="person.2.fill"
               android_material_icon_name="people"
-              size={80}
+              size={64}
               color={farmGreen}
             />
-            <Text style={[styles.comingSoonTitle, { color: colors.text }]}>
+            <Text style={[styles.placeholderTitle, { color: colors.text }]}>
               Customer Revenue Report
             </Text>
-            <Text style={[styles.comingSoonText, { color: colors.icon }]}>
-              This report will show revenue breakdown by customer, including top customers, purchase frequency, and lifetime value.
+            <Text style={[styles.placeholderDescription, { color: colors.icon }]}>
+              This report will show revenue breakdown by customer, including:
             </Text>
-            <View style={[styles.featureCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={[styles.featureTitle, { color: colors.text }]}>Coming Soon:</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Top customers by revenue</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Customer lifetime value</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Purchase frequency analysis</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Customer retention metrics</Text>
-              <Text style={[styles.featureItem, { color: colors.icon }]}>• Revenue trends by customer segment</Text>
+            <View style={styles.featureList}>
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  ios_icon_name="checkmark.circle.fill"
+                  android_material_icon_name="check-circle"
+                  size={20}
+                  color={farmGreen}
+                />
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Top customers by revenue
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  ios_icon_name="checkmark.circle.fill"
+                  android_material_icon_name="check-circle"
+                  size={20}
+                  color={farmGreen}
+                />
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Purchase history and frequency
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  ios_icon_name="checkmark.circle.fill"
+                  android_material_icon_name="check-circle"
+                  size={20}
+                  color={farmGreen}
+                />
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Customer lifetime value
+                </Text>
+              </View>
+              <View style={styles.featureItem}>
+                <IconSymbol
+                  ios_icon_name="checkmark.circle.fill"
+                  android_material_icon_name="check-circle"
+                  size={20}
+                  color={farmGreen}
+                />
+                <Text style={[styles.featureText, { color: colors.text }]}>
+                  Average order value per customer
+                </Text>
+              </View>
             </View>
+            <Text style={[styles.placeholderNote, { color: colors.icon }]}>
+              To use this report, add customer information when creating sales transactions in the financial tracking system.
+            </Text>
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -67,37 +107,44 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
   },
-  comingSoonContainer: {
+  placeholderCard: {
+    padding: 32,
+    borderRadius: 16,
+    borderWidth: 1,
     alignItems: 'center',
-    paddingVertical: 48,
-    paddingHorizontal: 24,
   },
-  comingSoonTitle: {
+  placeholderTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginTop: 24,
+    marginTop: 20,
     marginBottom: 12,
     textAlign: 'center',
   },
-  comingSoonText: {
+  placeholderDescription: {
     fontSize: 16,
     textAlign: 'center',
+    marginBottom: 24,
     lineHeight: 24,
-    marginBottom: 32,
   },
-  featureCard: {
+  featureList: {
     width: '100%',
-    padding: 20,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  featureTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 12,
+    marginBottom: 24,
   },
   featureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 12,
+  },
+  featureText: {
     fontSize: 15,
-    lineHeight: 28,
+    flex: 1,
+    lineHeight: 22,
+  },
+  placeholderNote: {
+    fontSize: 14,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 20,
   },
 });

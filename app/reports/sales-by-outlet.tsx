@@ -7,7 +7,6 @@ import {
   ScrollView,
   useColorScheme,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
@@ -16,28 +15,25 @@ import { IconSymbol } from '@/components/IconSymbol';
 import { useAuth } from '@/contexts/AuthContext';
 import { authenticatedGet } from '@/utils/api';
 
-interface FinancialTransaction {
+interface ConsumerListing {
   id: string;
-  type: 'income' | 'expense';
-  category: string;
-  amount: number;
-  description: string;
-  date: string;
-  cropId?: string;
+  outlet: string;
+  price: number;
+  quantity: number;
+  unit: string;
   cropName?: string;
 }
 
 interface OutletSales {
   outlet: string;
   totalRevenue: number;
-  transactionCount: number;
-  averageSale: number;
+  listingCount: number;
+  averagePrice: number;
 }
 
 export default function SalesByOutletScreen() {
   const colorScheme = useColorScheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { token } = useAuth();
   
   const [loading, setLoading] = useState(true);
   const [outletSales, setOutletSales] = useState<OutletSales[]>([]);
@@ -47,27 +43,26 @@ export default function SalesByOutletScreen() {
     console.log('Loading sales by outlet data');
     setLoading(true);
     try {
-      const data = await authenticatedGet<FinancialTransaction[]>('/api/financial');
-      console.log('Loaded financial data:', data.length, 'transactions');
+      const listings = await authenticatedGet<ConsumerListing[]>('/api/marketplace/consumer/listings');
+      console.log('Loaded consumer listings:', listings.length);
       
-      const incomeTransactions = data.filter(t => t.type === 'income');
-      
-      // Group by outlet (using category as outlet for now)
-      const outletMap: Record<string, { total: number; count: number }> = {};
-      incomeTransactions.forEach(t => {
-        const outlet = t.category || 'Direct Sales';
-        if (!outletMap[outlet]) {
-          outletMap[outlet] = { total: 0, count: 0 };
+      // Group by outlet
+      const outletMap: Record<string, { total: number; count: number; prices: number[] }> = {};
+      listings.forEach(listing => {
+        const revenue = listing.price * listing.quantity;
+        if (!outletMap[listing.outlet]) {
+          outletMap[listing.outlet] = { total: 0, count: 0, prices: [] };
         }
-        outletMap[outlet].total += t.amount;
-        outletMap[outlet].count += 1;
+        outletMap[listing.outlet].total += revenue;
+        outletMap[listing.outlet].count += 1;
+        outletMap[listing.outlet].prices.push(listing.price);
       });
       
       const salesData: OutletSales[] = Object.entries(outletMap).map(([outlet, data]) => ({
         outlet,
         totalRevenue: data.total,
-        transactionCount: data.count,
-        averageSale: data.total / data.count,
+        listingCount: data.count,
+        averagePrice: data.prices.reduce((a, b) => a + b, 0) / data.prices.length,
       }));
       
       salesData.sort((a, b) => b.totalRevenue - a.totalRevenue);
@@ -95,16 +90,6 @@ export default function SalesByOutletScreen() {
     return ((amount / totalRevenue) * 100).toFixed(1);
   };
 
-  const getOutletIcon = (outlet: string): string => {
-    const lowerOutlet = outlet.toLowerCase();
-    if (lowerOutlet.includes('market')) return 'store';
-    if (lowerOutlet.includes('csa') || lowerOutlet.includes('subscription')) return 'card-membership';
-    if (lowerOutlet.includes('restaurant')) return 'restaurant';
-    if (lowerOutlet.includes('wholesale')) return 'business';
-    if (lowerOutlet.includes('online')) return 'shopping-cart';
-    return 'storefront';
-  };
-
   return (
     <>
       <Stack.Screen
@@ -130,29 +115,29 @@ export default function SalesByOutletScreen() {
                   size={48}
                   color="#fff"
                 />
-                <Text style={styles.totalLabel}>Total Revenue</Text>
+                <Text style={styles.totalLabel}>Total Sales Revenue</Text>
                 <Text style={styles.totalValue}>{formatCurrency(totalRevenue)}</Text>
-                <Text style={styles.totalSubtext}>{outletSales.length} sales channels</Text>
+                <Text style={styles.totalSubtext}>{outletSales.length} sales outlets</Text>
               </View>
 
               {/* Sales by Outlet */}
               {outletSales.length > 0 ? (
                 <View style={styles.section}>
-                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Revenue by Sales Channel</Text>
+                  <Text style={[styles.sectionTitle, { color: colors.text }]}>Revenue by Outlet</Text>
                   {outletSales.map((outlet, index) => (
                     <View key={index} style={[styles.outletCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <View style={styles.outletHeader}>
                         <View style={styles.outletLeft}>
                           <IconSymbol
-                            ios_icon_name="storefront"
-                            android_material_icon_name={getOutletIcon(outlet.outlet)}
+                            ios_icon_name="storefront.fill"
+                            android_material_icon_name="store"
                             size={28}
                             color={farmGreen}
                           />
                           <View>
                             <Text style={[styles.outletName, { color: colors.text }]}>{outlet.outlet}</Text>
                             <Text style={[styles.outletSubtext, { color: colors.icon }]}>
-                              {outlet.transactionCount} {outlet.transactionCount === 1 ? 'sale' : 'sales'}
+                              {outlet.listingCount} {outlet.listingCount === 1 ? 'listing' : 'listings'}
                             </Text>
                           </View>
                         </View>
@@ -181,9 +166,9 @@ export default function SalesByOutletScreen() {
                       
                       <View style={styles.outletStats}>
                         <View style={styles.statItem}>
-                          <Text style={[styles.statLabel, { color: colors.icon }]}>Avg Sale</Text>
+                          <Text style={[styles.statLabel, { color: colors.icon }]}>Avg Price</Text>
                           <Text style={[styles.statValue, { color: colors.text }]}>
-                            {formatCurrency(outlet.averageSale)}
+                            {formatCurrency(outlet.averagePrice)}
                           </Text>
                         </View>
                       </View>
@@ -202,7 +187,7 @@ export default function SalesByOutletScreen() {
                     No sales outlet data found
                   </Text>
                   <Text style={[styles.emptySubtext, { color: colors.icon }]}>
-                    Add income transactions to see sales by outlet
+                    Create consumer marketplace listings to track sales by outlet
                   </Text>
                 </View>
               )}
