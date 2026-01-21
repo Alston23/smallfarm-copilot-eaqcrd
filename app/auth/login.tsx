@@ -30,17 +30,16 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
-  // Check if user is already authenticated AFTER screen is visible
+  // CRITICAL FIX: Check auth AFTER screen is visible, don't block rendering
   useEffect(() => {
-    console.log("🔍 Login screen: Checking if user is already authenticated");
+    console.log("🔍 Login screen: Checking if user is already authenticated (non-blocking)");
     
     async function checkAuthAndRedirect() {
       try {
         // Wait for auth context to finish loading
         if (authLoading) {
-          console.log("⏳ Login screen: Waiting for auth to load...");
+          console.log("⏳ Login screen: Auth still loading, waiting...");
           return;
         }
 
@@ -67,29 +66,14 @@ export default function AuthScreen() {
         }
       } catch (error) {
         console.error("❌ Login screen: Error checking auth:", error);
-      } finally {
-        setCheckingAuth(false);
       }
     }
 
     checkAuthAndRedirect();
   }, [user, authLoading, router]);
 
-  // Show loading state while checking auth (but screen is visible)
-  if (checkingAuth || authLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <IconSymbol 
-          ios_icon_name="leaf.fill" 
-          android_material_icon_name="eco" 
-          size={80} 
-          color="#fff" 
-        />
-        <ActivityIndicator size="large" color="#fff" style={{ marginTop: 20 }} />
-        <Text style={styles.loadingText}>Loading...</Text>
-      </View>
-    );
-  }
+  // CRITICAL FIX: Always render the login screen immediately
+  // No loading state that blocks the UI
 
   const handleEmailAuth = async () => {
     console.log("User tapped email auth button", { mode, email });
@@ -255,18 +239,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: farmGreen,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: farmGreen,
-  },
-  loadingText: {
-    color: "#fff",
-    fontSize: 18,
-    marginTop: 16,
-    fontWeight: "600",
   },
   scrollContent: {
     flexGrow: 1,

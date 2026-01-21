@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SmallFarm Copilot",
-    "slug": "SmallFarm Copilot",
+    "slug": "smallfarm-copilot-eaqcrd",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/natively-dark.png",
@@ -27,7 +27,7 @@
         "backgroundColor": "#2d5016"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.smallfarm.copilot",
+      "package": "com.alston.smallfarmcopilot",
       "permissions": [
         "CAMERA",
         "READ_EXTERNAL_STORAGE",

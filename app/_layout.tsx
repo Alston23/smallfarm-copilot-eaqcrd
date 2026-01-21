@@ -17,7 +17,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import Constants from "expo-constants";
 
-// Prevent auto-hide so we can control when to hide it
+// CRITICAL FIX: Prevent auto-hide so we can control when to hide it
 SplashScreen.preventAutoHideAsync();
 
 // Log backend URL at app startup for debugging
@@ -30,18 +30,26 @@ function AppContent() {
   });
 
   useEffect(() => {
+    console.log("🎨 AppContent: Fonts loaded status:", loaded);
+    
     if (loaded) {
-      console.log("✅ Fonts loaded, hiding splash screen");
-      // Hide splash screen as soon as fonts are loaded
+      console.log("✅ AppContent: Fonts loaded, hiding splash screen immediately");
+      // CRITICAL FIX: Hide splash screen as soon as fonts are loaded
       // Don't wait for auth or any other checks
-      SplashScreen.hideAsync();
+      SplashScreen.hideAsync().catch((error) => {
+        console.warn("⚠️ Failed to hide splash screen:", error);
+      });
     }
   }, [loaded]);
 
+  // CRITICAL FIX: Don't block rendering while fonts load
+  // Return null only if fonts aren't loaded yet (keeps splash visible)
   if (!loaded) {
-    // Fonts not loaded yet, keep splash screen visible
+    console.log("⏳ AppContent: Waiting for fonts to load...");
     return null;
   }
+
+  console.log("✅ AppContent: Rendering app navigation");
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -71,7 +79,7 @@ export default function RootLayout() {
   // Check if we're in a development build or Expo Go
   const isExpoGo = Constants.appOwnership === 'expo';
   
-  console.log('📱 Running in:', isExpoGo ? 'Expo Go (Superwall disabled)' : 'Development Build (Superwall enabled)');
+  console.log('📱 RootLayout: Running in:', isExpoGo ? 'Expo Go (Superwall disabled)' : 'Development Build (Superwall enabled)');
 
   // Only use Superwall if we're NOT in Expo Go
   if (!isExpoGo && Platform.OS !== 'web') {
@@ -109,5 +117,6 @@ export default function RootLayout() {
   }
 
   // Fallback: Run without Superwall (for Expo Go and web)
+  console.log('✅ RootLayout: Running without Superwall');
   return <AppContent />;
 }

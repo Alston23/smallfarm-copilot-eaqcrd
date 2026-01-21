@@ -77,9 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log("🔐 AuthContext: Fetching user session");
     
     try {
-      setLoading(true);
+      // CRITICAL FIX: Add timeout to prevent indefinite loading
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Auth check timeout")), 3000);
+      });
+
+      const sessionPromise = authClient.getSession();
       
-      const session = await authClient.getSession();
+      const session = await Promise.race([sessionPromise, timeoutPromise]) as any;
 
       if (session?.data?.user) {
         console.log("✅ AuthContext: User session found:", session.data.user.email);
@@ -104,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(null);
       }
     } catch (error) {
-      console.error("⚠️ AuthContext: Failed to fetch user:", error);
+      console.error("⚠️ AuthContext: Failed to fetch user (timeout or error):", error);
       setUser(null);
       setToken(null);
     } finally {
@@ -114,8 +119,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    console.log("🚀 AuthContext: Initial mount, fetching user");
-    fetchUser();
+    console.log("🚀 AuthContext: Initial mount, fetching user (non-blocking)");
+    
+    // CRITICAL FIX: Ensure loading state is set to false after max 3 seconds
+    const maxLoadingTimeout = setTimeout(() => {
+      console.log("⏰ AuthContext: Max loading timeout reached, forcing loading to false");
+      setLoading(false);
+    }, 3000);
+
+    fetchUser().finally(() => {
+      clearTimeout(maxLoadingTimeout);
+    });
+
+    return () => {
+      clearTimeout(maxLoadingTimeout);
+    };
   }, [fetchUser]);
 
   const signInWithEmail = async (email: string, password: string) => {
