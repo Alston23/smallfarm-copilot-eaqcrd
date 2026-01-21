@@ -10,6 +10,8 @@
       "autoIncrement": true
     },
     "production": {
+      "developmentClient": false,
+      "distribution": "store",
       "autoIncrement": true
     }
   }
