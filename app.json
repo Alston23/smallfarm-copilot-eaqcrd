@@ -1,62 +1,35 @@
 {
   "expo": {
     "name": "SmallFarm Copilot",
-    "slug": "smallfarm-copilot-eaqcrd",
+    "slug": "smallfarm-copilot",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/natively-dark.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/natively-dark.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#2d5016"
+      "backgroundColor": "#1F3D1B"
     },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.smallfarm.copilot",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false,
-        "NSCameraUsageDescription": "SmallFarm Copilot needs camera access to take photos of crops and equipment for marketplace listings and plant diagnosis.",
-        "NSPhotoLibraryUsageDescription": "SmallFarm Copilot needs photo library access to upload images of crops and equipment."
-      }
+      "bundleIdentifier": "com.alston23.smallfarmcopilot",
+      "buildNumber": "6"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/natively-dark.png",
-        "backgroundColor": "#2d5016"
-      },
-      "edgeToEdgeEnabled": true,
-      "package": "com.alston.smallfarmcopilot",
-      "permissions": [
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
-    },
-    "web": {
-      "favicon": "./assets/images/final_quest_240x240.png",
-      "bundler": "metro"
-    },
-    "plugins": [
-      "expo-font",
-      "expo-router",
-      "expo-web-browser",
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "SmallFarm Copilot needs access to your photos to upload images of crops and equipment."
-        }
-      ]
-    ],
-    "scheme": "smallfarm-copilot",
-    "experiments": {
-      "typedRoutes": true
+      "package": "com.alston23.smallfarmcopilot",
+      "versionCode": 6
     },
     "extra": {
-      "router": {},
-      "backendUrl": "https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev"
+      "eas": {
+        "projectId": "9c8fb790-52b0-458d-9e7e-f8865d82cad3"
+      }
     }
-  },
-  "scheme": "SmallFarm Copilot"
+  }
 }
