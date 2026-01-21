@@ -20,7 +20,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.alston23.smallfarmcopilot",
-      "buildNumber": "6"
+      "buildNumber": "7"
     },
     "android": {
       "package": "com.alston23.smallfarmcopilot",
@@ -29,8 +29,7 @@
     "extra": {
       "eas": {
         "projectId": "9c8fb790-52b0-458d-9e7e-f8865d82cad3"
-      },
-      "backendUrl": "https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev"
+      }
     }
   }
 }
