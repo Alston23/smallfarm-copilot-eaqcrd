@@ -11,6 +11,7 @@ import {
   Alert,
   Image,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
@@ -54,13 +55,13 @@ export default function FieldDetailsScreen() {
   const [uploading, setUploading] = useState(false);
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   const loadFieldAndNotes = useCallback(async () => {
     setLoading(true);
     try {
       console.log('Loading field details and notes for:', id);
       
-      // Load field details
       const fieldResponse = await fetch(`${BACKEND_URL}/api/fields-beds`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -71,7 +72,6 @@ export default function FieldDetailsScreen() {
         setField(currentField || null);
       }
 
-      // Load notes for this field/bed
       const notesResponse = await fetch(`${BACKEND_URL}/api/field-bed-notes/${id}`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -95,9 +95,22 @@ export default function FieldDetailsScreen() {
   const pickImage = async () => {
     console.log('User tapped upload photo');
     
-    // Web fallback: use file input
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Photo upload is not available on web. Please use the mobile app.');
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          setUploading(true);
+          try {
+            await uploadPhotoWeb(file);
+          } finally {
+            setUploading(false);
+          }
+        }
+      };
+      input.click();
       return;
     }
     
@@ -122,9 +135,8 @@ export default function FieldDetailsScreen() {
   const takePhoto = async () => {
     console.log('User tapped take photo');
     
-    // Web fallback: camera not available
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Camera is not available on web. Please use the mobile app.');
+      setShowCameraModal(true);
       return;
     }
     
@@ -145,12 +157,57 @@ export default function FieldDetailsScreen() {
     }
   };
 
+  const uploadPhotoWeb = async (file: File) => {
+    try {
+      console.log('Uploading photo from web:', file.name);
+      
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const uploadResponse = await fetch(`${BACKEND_URL}/api/upload/image`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error('Failed to upload image');
+      }
+
+      const { url } = await uploadResponse.json();
+      console.log('Image uploaded:', url);
+
+      const noteResponse = await fetch(`${BACKEND_URL}/api/field-bed-notes`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          fieldBedId: id,
+          noteType: 'photo',
+          fileUrl: url,
+        }),
+      });
+
+      if (noteResponse.ok) {
+        console.log('Photo note created successfully');
+        Alert.alert('Success', 'Photo added successfully');
+        loadFieldAndNotes();
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      Alert.alert('Error', 'Failed to upload photo');
+    }
+  };
+
   const uploadPhoto = async (uri: string) => {
     setUploading(true);
     try {
       console.log('Uploading photo:', uri);
       
-      // First upload the image file
       const formData = new FormData();
       formData.append('image', {
         uri,
@@ -173,7 +230,6 @@ export default function FieldDetailsScreen() {
       const { url } = await uploadResponse.json();
       console.log('Image uploaded:', url);
 
-      // Create the photo note in the database
       const noteResponse = await fetch(`${BACKEND_URL}/api/field-bed-notes`, {
         method: 'POST',
         headers: {
@@ -203,9 +259,8 @@ export default function FieldDetailsScreen() {
   const startRecording = async () => {
     console.log('User started voice recording');
     
-    // Web fallback: audio recording not available
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Voice recording is not available on web. Please use the mobile app.');
+      Alert.alert('Not Available', 'Voice recording is only available on the mobile app.');
       return;
     }
     
@@ -248,7 +303,6 @@ export default function FieldDetailsScreen() {
       console.log('Recording saved to:', uri);
       
       if (uri) {
-        // Upload the audio file using the image upload endpoint (supports multiple file types)
         const formData = new FormData();
         formData.append('image', {
           uri,
@@ -271,7 +325,6 @@ export default function FieldDetailsScreen() {
         const { url } = await uploadResponse.json();
         console.log('Audio uploaded:', url);
 
-        // Create the voice note in the database
         const noteResponse = await fetch(`${BACKEND_URL}/api/field-bed-notes`, {
           method: 'POST',
           headers: {
@@ -312,7 +365,6 @@ export default function FieldDetailsScreen() {
           onPress: async () => {
             try {
               console.log('Deleting note:', noteId);
-              // Delete the note from the database
               const response = await fetch(`${BACKEND_URL}/api/field-bed-notes/${noteId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` },
@@ -350,12 +402,13 @@ export default function FieldDetailsScreen() {
     );
   }
 
+  const uploadButtonText = Platform.OS === 'web' ? 'Upload Photo' : 'Upload Photo';
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, title: field.name }} />
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          {/* Field Info */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>Field Information</Text>
             <View style={styles.infoRow}>
@@ -388,7 +441,6 @@ export default function FieldDetailsScreen() {
             )}
           </View>
 
-          {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
               style={[styles.actionButton, { backgroundColor: farmGreen }]}
@@ -404,8 +456,8 @@ export default function FieldDetailsScreen() {
               onPress={pickImage}
               disabled={uploading}
             >
-              <IconSymbol ios_icon_name="photo.fill" android_material_icon_name="photo" size={24} color="#fff" />
-              <Text style={styles.actionButtonText}>Upload Photo</Text>
+              <IconSymbol ios_icon_name="photo.fill" android_material_icon_name="image" size={24} color="#fff" />
+              <Text style={styles.actionButtonText}>{uploadButtonText}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -432,7 +484,6 @@ export default function FieldDetailsScreen() {
             </View>
           )}
 
-          {/* Notes Section */}
           <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Notes ({notes.length})
@@ -470,6 +521,34 @@ export default function FieldDetailsScreen() {
           </View>
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        visible={showCameraModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCameraModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <IconSymbol
+              ios_icon_name="camera.fill"
+              android_material_icon_name="camera"
+              size={48}
+              color={farmGreen}
+            />
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Camera Not Available</Text>
+            <Text style={[styles.modalMessage, { color: colors.text }]}>
+              The camera feature is only available on the mobile app. Please use the &quot;Upload Photo&quot; button to select an image from your computer.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: farmGreen }]}
+              onPress={() => setShowCameraModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -586,5 +665,42 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginTop: 32,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    maxWidth: 400,
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  modalButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

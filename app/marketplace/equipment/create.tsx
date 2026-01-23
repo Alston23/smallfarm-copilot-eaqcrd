@@ -12,6 +12,7 @@ import {
   Alert,
   Image,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -35,8 +36,8 @@ export default function CreateEquipmentListingScreen() {
   const { token } = useAuth();
 
   const [loading, setLoading] = useState(false);
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
-  // Form state
   const [title, setTitle] = useState('');
   const [equipmentType, setEquipmentType] = useState('');
   const [listingType, setListingType] = useState('For Sale');
@@ -52,9 +53,22 @@ export default function CreateEquipmentListingScreen() {
   const pickImage = async () => {
     console.log('User tapped Pick Image button');
     
-    // Web fallback: not available
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Image upload is not available on web. Please use the mobile app.');
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = async (e: any) => {
+        const file = e.target?.files?.[0];
+        if (file) {
+          setUploadingImage(true);
+          try {
+            await uploadImageWeb(file);
+          } finally {
+            setUploadingImage(false);
+          }
+        }
+      };
+      input.click();
       return;
     }
     
@@ -73,9 +87,8 @@ export default function CreateEquipmentListingScreen() {
   const takePhoto = async () => {
     console.log('User tapped Take Photo button');
     
-    // Web fallback: camera not available
     if (Platform.OS === 'web') {
-      Alert.alert('Not Available', 'Camera is not available on web. Please use the mobile app.');
+      setShowCameraModal(true);
       return;
     }
     
@@ -87,6 +100,34 @@ export default function CreateEquipmentListingScreen() {
 
     if (!result.canceled && result.assets[0]) {
       await uploadImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadImageWeb = async (file: File) => {
+    try {
+      console.log('Uploading image from web:', file.name);
+      
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch(`${BACKEND_URL}/api/upload/image`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      console.log('Image uploaded:', data.url);
+      setImageUri(data.url);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      Alert.alert('Error', 'Failed to upload image');
     }
   };
 
@@ -168,6 +209,8 @@ export default function CreateEquipmentListingScreen() {
     }
   };
 
+  const uploadButtonText = Platform.OS === 'web' ? 'Upload Photo' : 'Choose Photo';
+
   return (
     <>
       <Stack.Screen
@@ -179,7 +222,6 @@ export default function CreateEquipmentListingScreen() {
       />
       <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['bottom']}>
         <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
-          {/* Title */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text }]}>Title *</Text>
             <TextInput
@@ -191,7 +233,6 @@ export default function CreateEquipmentListingScreen() {
             />
           </View>
 
-          {/* Equipment Type */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text }]}>Equipment Type *</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
@@ -220,7 +261,6 @@ export default function CreateEquipmentListingScreen() {
             </ScrollView>
           </View>
 
-          {/* Listing Type */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text }]}>Listing Type *</Text>
             <View style={styles.chipRow}>
@@ -249,7 +289,6 @@ export default function CreateEquipmentListingScreen() {
             </View>
           </View>
 
-          {/* Make and Model */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
               <Text style={[styles.label, { color: colors.text }]}>Make</Text>
@@ -274,7 +313,6 @@ export default function CreateEquipmentListingScreen() {
             </View>
           </View>
 
-          {/* Hours and Condition */}
           <View style={styles.row}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
               <Text style={[styles.label, { color: colors.text }]}>Hours</Text>
@@ -317,7 +355,6 @@ export default function CreateEquipmentListingScreen() {
             </View>
           </View>
 
-          {/* Price (only for For Sale) */}
           {listingType === 'For Sale' && (
             <View style={styles.section}>
               <Text style={[styles.label, { color: colors.text }]}>Price *</Text>
@@ -332,7 +369,6 @@ export default function CreateEquipmentListingScreen() {
             </View>
           )}
 
-          {/* Description */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text }]}>Description *</Text>
             <TextInput
@@ -347,7 +383,6 @@ export default function CreateEquipmentListingScreen() {
             />
           </View>
 
-          {/* Image Upload */}
           <View style={styles.section}>
             <Text style={[styles.label, { color: colors.text }]}>Photo (Optional)</Text>
             {imageUri ? (
@@ -392,7 +427,9 @@ export default function CreateEquipmentListingScreen() {
                     size={24}
                     color={farmGreen}
                   />
-                  <Text style={[styles.imageButtonText, { color: colors.text }]}>Choose Photo</Text>
+                  <Text style={[styles.imageButtonText, { color: colors.text }]}>
+                    {uploadButtonText}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -404,7 +441,6 @@ export default function CreateEquipmentListingScreen() {
             )}
           </View>
 
-          {/* Submit Button */}
           <TouchableOpacity
             style={[styles.submitButton, { backgroundColor: farmGreen }]}
             onPress={handleSubmit}
@@ -418,6 +454,34 @@ export default function CreateEquipmentListingScreen() {
           </TouchableOpacity>
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        visible={showCameraModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCameraModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <IconSymbol
+              ios_icon_name="camera.fill"
+              android_material_icon_name="camera"
+              size={48}
+              color={farmGreen}
+            />
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Camera Not Available</Text>
+            <Text style={[styles.modalMessage, { color: colors.text }]}>
+              The camera feature is only available on the mobile app. Please use the &quot;Upload Photo&quot; button to select an image from your computer.
+            </Text>
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: farmGreen }]}
+              onPress={() => setShowCameraModal(false)}
+            >
+              <Text style={styles.modalButtonText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 }
@@ -547,6 +611,43 @@ const styles = StyleSheet.create({
   submitButtonText: {
     color: '#fff',
     fontSize: 18,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    maxWidth: 400,
+    width: '100%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  modalButton: {
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  modalButtonText: {
+    color: '#fff',
+    fontSize: 16,
     fontWeight: '600',
   },
 });
