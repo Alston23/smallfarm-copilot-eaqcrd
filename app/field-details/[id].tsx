@@ -94,6 +94,13 @@ export default function FieldDetailsScreen() {
 
   const pickImage = async () => {
     console.log('User tapped upload photo');
+    
+    // Web fallback: use file input
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Photo upload is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (status !== 'granted') {
@@ -114,6 +121,13 @@ export default function FieldDetailsScreen() {
 
   const takePhoto = async () => {
     console.log('User tapped take photo');
+    
+    // Web fallback: camera not available
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Camera is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     
     if (status !== 'granted') {
@@ -188,6 +202,13 @@ export default function FieldDetailsScreen() {
 
   const startRecording = async () => {
     console.log('User started voice recording');
+    
+    // Web fallback: audio recording not available
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Voice recording is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     try {
       const { status } = await Audio.requestPermissionsAsync();
       

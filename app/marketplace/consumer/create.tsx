@@ -74,6 +74,13 @@ export default function CreateConsumerListingScreen() {
 
   const pickImage = async () => {
     console.log('User tapped Pick Image button');
+    
+    // Web fallback: not available
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Image upload is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images' as any,
       allowsEditing: true,
@@ -88,6 +95,13 @@ export default function CreateConsumerListingScreen() {
 
   const takePhoto = async () => {
     console.log('User tapped Take Photo button');
+    
+    // Web fallback: camera not available
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Camera is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [4, 3],

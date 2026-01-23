@@ -363,7 +363,7 @@ export default function AddHarvestScreen() {
                 </TouchableOpacity>
               </View>
 
-              {showDatePicker && (
+              {showDatePicker && Platform.OS !== 'web' && (
                 <DateTimePicker
                   value={harvestDate}
                   mode="date"

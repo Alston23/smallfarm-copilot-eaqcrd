@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SmallFarm Copilot",
-    "slug": "smallfarm-copilot",
+    "slug": "SmallFarm Copilot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -32,5 +32,6 @@
       },
       "backendUrl": "https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev"
     }
-  }
+  },
+  "scheme": "SmallFarm Copilot"
 }

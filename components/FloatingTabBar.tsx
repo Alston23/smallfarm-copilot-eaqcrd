@@ -11,7 +11,6 @@ import {
 import { useRouter, usePathname } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconSymbol } from '@/components/IconSymbol';
-import { BlurView } from 'expo-blur';
 import { useTheme } from '@react-navigation/native';
 import Animated, {
   useAnimatedStyle,
@@ -21,6 +20,12 @@ import Animated, {
 } from 'react-native-reanimated';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Href } from 'expo-router';
+
+// Conditional import for BlurView (not available on web)
+let BlurView: any;
+if (Platform.OS !== 'web') {
+  BlurView = require('expo-blur').BlurView;
+}
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -172,6 +177,58 @@ export default function FloatingTabBar({
       width: `${tabWidthPercent}%` as `${number}%`, // Dynamic width based on number of tabs
     },
   };
+
+  // Web fallback: render without BlurView
+  if (Platform.OS === 'web') {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+        <View style={[
+          styles.container,
+          {
+            width: containerWidth,
+            marginBottom: bottomMargin ?? 20
+          }
+        ]}>
+          <View style={[dynamicStyles.blurContainer, { borderRadius }]}>
+            <View style={dynamicStyles.background} />
+            <Animated.View style={[dynamicStyles.indicator, indicatorStyle]} />
+            <View style={styles.tabsContainer}>
+              {tabs.map((tab, index) => {
+                const isActive = activeTabIndex === index;
+
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.tab}
+                    onPress={() => handleTabPress(tab.route)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.tabContent}>
+                      <IconSymbol
+                        android_material_icon_name={tab.icon}
+                        ios_icon_name={tab.icon}
+                        size={24}
+                        color={isActive ? theme.colors.primary : (theme.dark ? '#98989D' : '#000000')}
+                      />
+                      <Text
+                        style={[
+                          styles.tabLabel,
+                          { color: theme.dark ? '#98989D' : '#8E8E93' },
+                          isActive && { color: theme.colors.primary, fontWeight: '600' },
+                        ]}
+                      >
+                        {tab.label}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>

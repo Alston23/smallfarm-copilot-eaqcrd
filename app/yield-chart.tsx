@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack, useRouter } from 'expo-router';
@@ -81,6 +82,13 @@ export default function YieldChartScreen() {
 
   const exportReport = async (format: 'csv' | 'pdf') => {
     console.log(`User exporting harvest report as ${format}`);
+    
+    // Web fallback: file sharing not available
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'File export is not available on web. Please use the mobile app.');
+      return;
+    }
+    
     setExporting(true);
     
     try {

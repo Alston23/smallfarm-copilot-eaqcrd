@@ -81,7 +81,7 @@ export default function RootLayout() {
   
   console.log('📱 RootLayout: Running in:', isExpoGo ? 'Expo Go (Superwall disabled)' : 'Development Build (Superwall enabled)');
 
-  // Only use Superwall if we're NOT in Expo Go
+  // Only use Superwall if we're NOT in Expo Go or web
   if (!isExpoGo && Platform.OS !== 'web') {
     try {
       // Dynamically import Superwall only when needed
