@@ -1,12 +1,14 @@
+
+# Dependencies
 node_modules/
+backend/node_modules/
 
-.git/
+# Expo
 .expo/
-
 dist/
 web-build/
-expo-env.d.ts
 
+# Native
 *.orig.*
 *.jks
 *.p8
@@ -14,26 +16,24 @@ expo-env.d.ts
 *.key
 *.mobileprovision
 
+# Metro
 .metro-health-check*
 
+# Debug
 npm-debug.*
 yarn-debug.*
 yarn-error.*
 
-.DS_Store
-*.pem
+# Macros
+*.hprof
 
+# Local env files
 .env*.local
+.env
 
+# Typescript
 *.tsbuildinfo
 
-.natively/
-
-android/
-ios/
-
-pnpm-lock.yaml
-package-lock.json
-
-# Chat history contains presigned URLs that get flagged by GitHub
-chat_history.json
+# Build outputs
+backend/dist/
+backend/build/

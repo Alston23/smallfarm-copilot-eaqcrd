@@ -1,0 +1,98 @@
+[2026-01-25T17:13:38.958Z] [Web] [LOG] Running application "main" with appParams:
+ {"rootTag":"#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+[2026-01-25T17:13:39.014Z] [Web] [LOG] 🌐 Backend URL: https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev
+[2026-01-25T17:13:39.005Z] [Web] [WARN] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-01-25T17:13:39.043Z] [Web] [LOG] ⏳ AppContent: Waiting for fonts to load...
+[2026-01-25T17:13:39.018Z] [Web] [WARN] [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+[2026-01-25T17:13:39.048Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: false
+[2026-01-25T17:13:39.173Z] [Web] [LOG] 🔐 AuthContext: Fetching user session
+[2026-01-25T17:13:39.148Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: true
+[2026-01-25T17:13:39.644Z] [Web] [LOG] ℹ️ Login screen: No user authenticated, staying on login screen
+[2026-01-25T17:13:39.042Z] [Web] [LOG] 📱 RootLayout: Running in: Development Build (Superwall enabled)
+[2026-01-25T17:13:39.153Z] [Web] [LOG] ✅ AppContent: Fonts loaded, hiding splash screen immediately
+[2026-01-25T17:13:39.042Z] [Web] [LOG] ✅ RootLayout: Running without Superwall
+[2026-01-25T17:13:39.189Z] [Web] [LOG] 🔍 Login screen: Checking if user is already authenticated (non-blocking)
+[2026-01-25T17:13:39.618Z] [Web] [LOG] 🏁 AuthContext: User fetch complete
+[2026-01-25T17:13:39.193Z] [Web] [LOG] ⏳ Login screen: Auth still loading, waiting...
+[2026-01-25T17:13:39.617Z] [Web] [LOG] ℹ️ AuthContext: No user session found
+[2026-01-25T17:13:39.164Z] [Web] [LOG] 🚀 Index: App startup - immediately navigating to login
+[2026-01-25T17:13:39.159Z] [Web] [LOG] ➡️ Index: Redirecting to login screen
+[2026-01-25T17:13:39.169Z] [Web] [LOG] 🚀 AuthContext: Initial mount, fetching user (non-blocking)
+[2026-01-25T17:13:39.139Z] [Web] [LOG] ✅ AppContent: Rendering app navigation
+[2026-01-25T17:18:40.192Z] [Web] [WARN] Disconnected from Metro (1006)
+To reconnect:
+- Ensure that Metro is running and available on the same network
+- Reload this app (will trigger further help if Metro cannot be connected to)
+[2026-01-25T17:41:46.162Z] [Web] [LOG] Running application "main" with appParams:
+ {"rootTag":"#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+[2026-01-25T17:41:46.218Z] [Web] [LOG] 🌐 Backend URL: https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev
+[2026-01-25T17:41:46.222Z] [Web] [WARN] [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+[2026-01-25T17:41:46.864Z] [Web] [LOG] 🏁 AuthContext: User fetch complete
+[2026-01-25T17:41:46.341Z] [Web] [LOG] ✅ AppContent: Fonts loaded, hiding splash screen immediately
+[2026-01-25T17:41:46.209Z] [Web] [WARN] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-01-25T17:41:46.249Z] [Web] [LOG] ⏳ AppContent: Waiting for fonts to load...
+[2026-01-25T17:41:46.331Z] [Web] [LOG] ✅ AppContent: Rendering app navigation
+[2026-01-25T17:41:46.357Z] [Web] [LOG] 🚀 AuthContext: Initial mount, fetching user (non-blocking)
+[2026-01-25T17:41:46.863Z] [Web] [LOG] ℹ️ AuthContext: No user session found
+[2026-01-25T17:41:46.247Z] [Web] [LOG] 📱 RootLayout: Running in: Development Build (Superwall enabled)
+[2026-01-25T17:41:46.254Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: false
+[2026-01-25T17:41:46.248Z] [Web] [LOG] ✅ RootLayout: Running without Superwall
+[2026-01-25T17:41:46.352Z] [Web] [LOG] 🚀 Index: App startup - immediately navigating to login
+[2026-01-25T17:41:46.360Z] [Web] [LOG] 🔐 AuthContext: Fetching user session
+[2026-01-25T17:41:46.890Z] [Web] [LOG] ℹ️ Login screen: No user authenticated, staying on login screen
+[2026-01-25T17:41:46.337Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: true
+[2026-01-25T17:41:46.378Z] [Web] [LOG] 🔍 Login screen: Checking if user is already authenticated (non-blocking)
+[2026-01-25T17:41:46.382Z] [Web] [LOG] ⏳ Login screen: Auth still loading, waiting...
+[2026-01-25T17:41:46.347Z] [Web] [LOG] ➡️ Index: Redirecting to login screen
+[2026-01-25T17:46:47.238Z] [Web] [WARN] Disconnected from Metro (1006)
+To reconnect:
+- Ensure that Metro is running and available on the same network
+- Reload this app (will trigger further help if Metro cannot be connected to)
+[2026-01-25T17:56:26.693Z] [Web] [LOG] Running application "main" with appParams:
+ {"rootTag":"#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+[2026-01-25T17:56:26.737Z] [Web] [WARN] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-01-25T17:56:26.745Z] [Web] [LOG] 🌐 Backend URL: https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev
+[2026-01-25T17:56:26.749Z] [Web] [WARN] [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+[2026-01-25T17:56:26.771Z] [Web] [LOG] ⏳ AppContent: Waiting for fonts to load...
+[2026-01-25T17:56:26.769Z] [Web] [LOG] ✅ RootLayout: Running without Superwall
+[2026-01-25T17:56:26.978Z] [Web] [LOG] ✅ AppContent: Rendering app navigation
+[2026-01-25T17:56:26.769Z] [Web] [LOG] 📱 RootLayout: Running in: Development Build (Superwall enabled)
+[2026-01-25T17:56:26.774Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: false
+[2026-01-25T17:56:26.984Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: true
+[2026-01-25T17:56:27.005Z] [Web] [LOG] 🔐 AuthContext: Fetching user session
+[2026-01-25T17:56:26.993Z] [Web] [LOG] ➡️ Index: Redirecting to login screen
+[2026-01-25T17:56:27.018Z] [Web] [LOG] 🔍 Login screen: Checking if user is already authenticated (non-blocking)
+[2026-01-25T17:56:27.001Z] [Web] [LOG] 🚀 AuthContext: Initial mount, fetching user (non-blocking)
+[2026-01-25T17:56:27.022Z] [Web] [LOG] ⏳ Login screen: Auth still loading, waiting...
+[2026-01-25T17:56:26.988Z] [Web] [LOG] ✅ AppContent: Fonts loaded, hiding splash screen immediately
+[2026-01-25T17:56:26.997Z] [Web] [LOG] 🚀 Index: App startup - immediately navigating to login
+[2026-01-25T17:56:28.930Z] [Web] [LOG] Running application "main" with appParams:
+ {"rootTag":"#root"} 
+Development-level warnings: ON.
+Performance optimizations: OFF.
+[2026-01-25T17:56:28.945Z] [Web] [WARN] "shadow*" style props are deprecated. Use "boxShadow".
+[2026-01-25T17:56:28.960Z] [Web] [LOG] 📱 RootLayout: Running in: Development Build (Superwall enabled)
+[2026-01-25T17:56:28.953Z] [Web] [WARN] [expo-av]: Expo AV has been deprecated and will be removed in SDK 54. Use the `expo-audio` and `expo-video` packages to replace the required functionality.
+[2026-01-25T17:56:28.950Z] [Web] [LOG] 🌐 Backend URL: https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev
+[2026-01-25T17:56:28.961Z] [Web] [LOG] ✅ RootLayout: Running without Superwall
+[2026-01-25T17:56:28.962Z] [Web] [LOG] ⏳ AppContent: Waiting for fonts to load...
+[2026-01-25T17:56:29.102Z] [Web] [LOG] 🚀 AuthContext: Initial mount, fetching user (non-blocking)
+[2026-01-25T17:56:28.963Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: false
+[2026-01-25T17:56:29.076Z] [Web] [LOG] ✅ AppContent: Rendering app navigation
+[2026-01-25T17:56:29.083Z] [Web] [LOG] 🎨 AppContent: Fonts loaded status: true
+[2026-01-25T17:56:29.088Z] [Web] [LOG] ✅ AppContent: Fonts loaded, hiding splash screen immediately
+[2026-01-25T17:56:29.121Z] [Web] [LOG] ⏳ Login screen: Auth still loading, waiting...
+[2026-01-25T17:56:29.098Z] [Web] [LOG] 🚀 Index: App startup - immediately navigating to login
+[2026-01-25T17:56:29.269Z] [Web] [LOG] ℹ️ AuthContext: No user session found
+[2026-01-25T17:56:29.118Z] [Web] [LOG] 🔍 Login screen: Checking if user is already authenticated (non-blocking)
+[2026-01-25T17:56:29.093Z] [Web] [LOG] ➡️ Index: Redirecting to login screen
+[2026-01-25T17:56:29.106Z] [Web] [LOG] 🔐 AuthContext: Fetching user session
+[2026-01-25T17:56:29.269Z] [Web] [LOG] 🏁 AuthContext: User fetch complete
+[2026-01-25T17:56:29.280Z] [Web] [LOG] 🔍 Login screen: Checking if user is already authenticated (non-blocking)
+[2026-01-25T17:56:29.286Z] [Web] [LOG] ℹ️ Login screen: No user authenticated, staying on login screen
