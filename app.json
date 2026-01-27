@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "SmallFarm Copilot",
-    "slug": "SmallFarm Copilot",
+    "slug": "SmallFarm-Copilot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
