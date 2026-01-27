@@ -5,10 +5,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "web": {
-  "basePath": "/smallfarm-copilot-eaqcrd"
-  "publicPath": "/smallfarm-copilot-eaqcrd/"
-},
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
@@ -37,5 +33,5 @@
       "backendUrl": "https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev"
     }
   },
-  "scheme": "SmallFarm Copilot"
+  "scheme": "smallfarmcopilot"
 }
