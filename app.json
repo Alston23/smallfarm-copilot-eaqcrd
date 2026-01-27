@@ -5,6 +5,9 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
+    "web": {
+  "basePath": "/smallfarm-copilot-eaqcrd"
+},
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash.png",
