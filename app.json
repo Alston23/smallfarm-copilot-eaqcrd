@@ -5,6 +5,9 @@
 "experiments": {
   "baseUrl": "/smallfarm-copilot-eaqcrd"
 },
+"web": {
+  "bundler": "webpack"
+},
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
