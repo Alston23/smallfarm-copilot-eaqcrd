@@ -2,18 +2,25 @@
   "expo": {
     "name": "SmallFarm Copilot",
     "slug": "smallfarm-copilot-eaqcrd",
-"web": {
-  "bundler": "webpack"
-},
+
+    "platforms": ["ios", "android", "web"],
+
+    "web": {
+      "bundler": "metro"
+    },
+
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
+
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#1F3D1B"
-    },
+    }
+  }
+}
     "updates": {
       "fallbackToCacheTimeout": 0
     },
