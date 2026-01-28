@@ -2,9 +2,6 @@
   "expo": {
     "name": "SmallFarm Copilot",
     "slug": "smallfarm-copilot-eaqcrd",
-"experiments": {
-  "baseUrl": "/smallfarm-copilot-eaqcrd"
-},
 "web": {
   "bundler": "webpack"
 },
