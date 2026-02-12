@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "SmallFarm Copilot",
+    "slug": "SmallFarm Copilot",
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F3D1B"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.alston23.smallfarmcopilot",
+      "buildNumber": "6"
+    },
+    "android": {
+      "package": "com.alston23.smallfarmcopilot",
+      "versionCode": 6
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9c8fb790-52b0-458d-9e7e-f8865d82cad3"
+      },
+      "backendUrl": "https://8zg7gm9pb3edeprgzqzexfwtbq2w637s.app.specular.dev"
+    },
+    "scheme": "SmallFarm Copilot"
+  }
+}
